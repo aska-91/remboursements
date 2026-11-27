@@ -186,6 +186,42 @@ export const strings = {
     deleteOk: "Delete",
   },
 
+  // ---------- overview ----------
+  overview: {
+    label: "Overview",
+    remaining: "Still to receive",
+    remainingSub: (n: number) => `${plural(n, "refund")} expected`,
+    toDo: "To do",
+    toDoSub: (amount: number) => `${m(amount)} late or with a gap`,
+    received: "Already received",
+    receivedSub: (paid: number) => `of ${m(paid)} paid`,
+    outOfPocket: "Out-of-pocket",
+    outOfPocketSub: "expected if everything arrives",
+    bySource: "Still to receive by source",
+    nothingPending: "Nothing pending for now.",
+  },
+  alerts: {
+    title: (n: number) => `To do (${n})`,
+    returnOverdue: (days: number, label: string) => `Return deadline passed by ${plural(days, "day")}: ${label}`,
+    returnSoon: (inDays: string, label: string) => `To return ${inDays}: ${label}`,
+    requestOverdue: (days: number, label: string) => `Claim deadline passed by ${plural(days, "day")}: ${label}`,
+    requestSoon: (deadline: string, inDays: string, label: string) => `Request to send before ${formatDate(deadline)} (${inDays}): ${label}`,
+    itemLate: (source: string, days: number, amount: number, label: string) => `${source} late by ${plural(days, "day")} (${m(amount)}): ${label}`,
+    itemGap: (amount: number, source: string, label: string) => `${m(amount)} missing from ${source}: ${label}`,
+    showMore: (n: number) => `Show the ${n} others`,
+    showLess: "Show less",
+  },
+  yearly: {
+    title: "Totals by year",
+    year: "Year",
+    count: "Expenses",
+    paid: "Paid",
+    received: "Received",
+    remaining: "To receive",
+    outOfPocket: "Out-of-pocket",
+    empty: "Totals appear with the first expense.",
+  },
+
   // ---------- expense form ----------
   form: {
     newTitle: "New expense",

@@ -3,6 +3,7 @@ import * as A from "../domain/actions";
 import { openStorage, type OpenedStorage } from "../storage/startup";
 import { makeClaimActions, type DialogSpec } from "./claimActions";
 import { ClaimList } from "./ClaimList";
+import { Sources, Tiles, ToDo, YearTotals } from "./Overview";
 import { ActionDialog } from "./dialogs/ActionDialog";
 import { ClaimForm } from "./dialogs/ClaimForm";
 import { ConfirmDialog } from "./dialogs/ConfirmDialog";
@@ -40,9 +41,18 @@ function Main({ opened }: { opened: OpenedStorage }) {
         {!data.persistent && <p class="banner bad" role="alert">{strings.storageNotPersistent}</p>}
         {data.saveError && <p class="banner bad" role="alert">{strings.saveFailed}</p>}
         {data.migrated > 0 && <p class="banner" role="status">{strings.migrated(data.migrated)}</p>}
-        <main>
-          <ClaimList claims={data.doc.claims} today={data.today} actions={actions} onAdd={() => setDialog({ kind: "form" })} />
-        </main>
+        {/* Phone: overview above the list. Desktop: overview in a side column. */}
+        <div class="layout">
+          <aside class="side">
+            <Tiles claims={data.doc.claims} today={data.today} />
+            <ToDo claims={data.doc.claims} today={data.today} actions={actions} />
+            <Sources claims={data.doc.claims} today={data.today} />
+            <YearTotals claims={data.doc.claims} today={data.today} />
+          </aside>
+          <main class="main">
+            <ClaimList claims={data.doc.claims} today={data.today} actions={actions} onAdd={() => setDialog({ kind: "form" })} />
+          </main>
+        </div>
       </div>
 
       {dialog?.kind === "action" && <ActionDialog cfg={dialog.cfg} onClose={close} />}
