@@ -17,6 +17,22 @@ export interface AppData {
   updateDoc: (change: (d: Doc, now: Timestamp) => Doc) => void;
 }
 
+/**
+ * Number of saves not yet written to the device. While it is above 0, closing or
+ * reloading the page asks for confirmation, so the last change is not lost, and
+ * <html data-saving> is set (the browser tests wait for it to clear).
+ */
+let savesInProgress = 0;
+function markSaving() {
+  if (savesInProgress > 0) document.documentElement.dataset.saving = "";
+  else delete document.documentElement.dataset.saving;
+}
+if (typeof window !== "undefined") {
+  window.addEventListener("beforeunload", (e) => {
+    if (savesInProgress > 0) e.preventDefault();
+  });
+}
+
 /** Keeps the date current: re-checked every minute and when the app comes back to the foreground. */
 function useToday(): Ymd {
   const [t, setT] = useState(computeToday());
@@ -44,7 +60,12 @@ export function useAppData(opened: OpenedStorage): AppData {
     (next: Doc) => {
       docRef.current = next;
       setDoc(next);
-      storage.save(next).then(
+      savesInProgress++;
+      markSaving();
+      storage.save(next).finally(() => {
+        savesInProgress--;
+        markSaving();
+      }).then(
         // Merge rather than replace, so a change made while saving is not lost.
         (stored) => {
           setSaveError(false);

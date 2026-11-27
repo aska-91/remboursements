@@ -48,6 +48,11 @@ export async function start(page: Page, opts: { demo?: boolean } = {}) {
   await page.locator(opts.demo ? ".card" : ".empty").first().waitFor();
 }
 
+/** Waits until every change has been written to the device (before a reload). */
+export async function saved(page: Page) {
+  await page.waitForFunction(() => !document.documentElement.hasAttribute("data-saving"));
+}
+
 /** Fails the test on any uncaught page error. */
 export const test = base.extend<{ errors: string[] }>({
   errors: [async ({ page }, use) => {
