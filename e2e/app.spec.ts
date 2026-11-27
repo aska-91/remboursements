@@ -159,8 +159,7 @@ test("Chrome reports the app as installable (manifest, icons, service worker)", 
   await page.evaluate(() => navigator.serviceWorker.ready);
   const cdp = await page.context().newCDPSession(page);
   const { installabilityErrors } = await cdp.send("Page.getInstallabilityErrors");
-  // Test browser sessions count as private browsing, where Chrome never offers to install: not about the app.
-  expect(installabilityErrors.filter((e) => e.errorId !== "in-incognito")).toEqual([]);
+  expect(installabilityErrors).toEqual([]);
   const manifest = await (await page.request.get("/manifest.webmanifest")).json();
   const sizes = manifest.icons.map((i: { sizes: string }) => i.sizes);
   expect(sizes).toEqual(expect.arrayContaining(["192x192", "512x512"]));
