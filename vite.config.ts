@@ -8,6 +8,7 @@ export default defineConfig({
     preact(),
     VitePWA({
       registerType: "autoUpdate",
+      workbox: { globPatterns: ["**/*.{js,css,html,svg,woff2}"] },
       includeAssets: ["icon.svg"],
       manifest: {
         name: "Refund Tracker",
