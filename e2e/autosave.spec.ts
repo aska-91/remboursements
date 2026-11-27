@@ -1,5 +1,5 @@
 import type { Page } from "@playwright/test";
-import { expect, saved, start, test } from "./fixtures";
+import { expect, start, test } from "./fixtures";
 
 /** Replaces the native file picker with a file in the browser's private file system (same API). */
 async function fakePicker(page: Page) {
@@ -22,7 +22,14 @@ const writeFile = (page: Page, text: string) =>
   }, text);
 const openMenu = (page: Page) => page.locator("summary", { hasText: "Backup" }).click();
 
-test("saves to the chosen file after every change, and again after a restart", async ({ page }) => {
+/*
+ * The browser's private file system stands in for a file picked on disk (tests cannot drive the
+ * native picker). Restarting is not tested here: on GitHub's Ubuntu runners, reading such a handle
+ * back from IndexedDB after a reload makes Chromium exit (seen with plain code, without the app).
+ * Real installs store a handle to a file on disk, a different path. Restart behaviour (resume with
+ * or without permission) is covered by tests/fileMirror.test.ts.
+ */
+test("saves to the chosen file after every change, and stops when asked", async ({ page }) => {
   await fakePicker(page);
   await start(page, { demo: true });
   await writeFile(page, "");
@@ -30,25 +37,18 @@ test("saves to the chosen file after every change, and again after a restart", a
   await page.getByRole("button", { name: "Save automatically to a file…" }).click();
   await expect(page.locator(".toast")).toHaveText("Automatic saving to “autosave.json” started");
   await expect.poll(async () => JSON.parse((await readFile(page)) || "{}").claims?.length).toBe(8);
-
-  // A change reaches the file shortly after.
-  const card = page.locator("article", { hasText: "Dr Martin" });
-  await card.getByRole("button", { name: "Add note" }).click();
-  await page.getByRole("dialog").getByLabel("Note").fill("Called the mutuelle");
-  await page.getByRole("dialog").getByRole("button", { name: "Add" }).click();
-  await expect.poll(() => readFile(page), { timeout: 5000 }).toContain("Called the mutuelle");
-
-  // After a restart the same file is used again.
-  await saved(page);
-  await page.reload();
-  await page.locator(".card").first().waitFor();
   await openMenu(page);
   await expect(page.locator(".menu-section [role=status]")).toContainText("Saving to “autosave.json”");
   await page.keyboard.press("Escape");
-  await card.getByRole("button", { name: "Add note" }).click();
-  await page.getByRole("dialog").getByLabel("Note").fill("Second note");
-  await page.getByRole("dialog").getByRole("button", { name: "Add" }).click();
-  await expect.poll(() => readFile(page), { timeout: 5000 }).toContain("Second note");
+
+  // Each change reaches the file shortly after.
+  const card = page.locator("article", { hasText: "Dr Martin" });
+  for (const note of ["Called the mutuelle", "Second note"]) {
+    await card.getByRole("button", { name: "Add note" }).click();
+    await page.getByRole("dialog").getByLabel("Note").fill(note);
+    await page.getByRole("dialog").getByRole("button", { name: "Add" }).click();
+    await expect.poll(() => readFile(page), { timeout: 5000 }).toContain(note);
+  }
 
   // Stop: the file no longer changes.
   await openMenu(page);
