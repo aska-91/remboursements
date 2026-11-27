@@ -55,10 +55,20 @@ export async function saved(page: Page) {
 
 /** Fails the test on any uncaught page error. */
 export const test = base.extend<{ errors: string[] }>({
-  errors: [async ({ page }, use) => {
+  errors: [async ({ page, browser }, use, testInfo) => {
     const errors: string[] = [];
-    page.on("pageerror", (e) => errors.push(String(e)));
+    // Timeline of what the page did, printed only when a test fails (to diagnose CI-only failures).
+    const t0 = Date.now();
+    const events: string[] = [];
+    const note = (e: string) => events.push(`+${Date.now() - t0}ms ${e}`);
+    page.on("pageerror", (e) => { errors.push(String(e)); note(`pageerror ${e}`); });
+    page.on("crash", () => { errors.push("page crashed"); note("CRASH"); });
+    page.on("close", () => note("page closed"));
+    page.on("console", (m) => { note(`console.${m.type()} ${m.text()}`); if (m.type() === "error") errors.push(`console: ${m.text()}`); });
+    page.on("framenavigated", (f) => { if (f === page.mainFrame()) note(`navigated ${f.url()}`); });
+    browser.on("disconnected", () => note("BROWSER DISCONNECTED"));
     await use(errors);
+    if (testInfo.status !== testInfo.expectedStatus) console.log(`--- timeline of "${testInfo.title}" (${testInfo.project.name}) ---\n${events.join("\n")}`);
     expect(errors).toEqual([]);
   }, { auto: true }],
 });

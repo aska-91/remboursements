@@ -11,6 +11,7 @@ import { ConfirmDialog } from "./dialogs/ConfirmDialog";
 import { ReceiptDialog } from "./dialogs/ReceiptDialog";
 import { Toast, useToast } from "./components/Toast";
 import { useAppData } from "./useAppData";
+import { useAutoSave } from "./useAutoSave";
 import { applyLang, getLang, LANGS, strings, type Lang } from "./strings";
 
 export function App() {
@@ -31,6 +32,7 @@ function Main({ opened }: { opened: OpenedStorage }) {
   };
   const [dialog, setDialog] = useState<DialogSpec | null>(null);
   const [toastMsg, toast] = useToast();
+  const autosave = useAutoSave(data, opened.mirror, toast);
   const actions = useMemo(() => makeClaimActions(data, setDialog, toast), [data]);
   const close = () => setDialog(null);
 
@@ -49,12 +51,24 @@ function Main({ opened }: { opened: OpenedStorage }) {
                 {LANGS.map((l) => <option key={l} value={l} lang={l}>{l === "en" ? "English" : "Français"}</option>)}
               </select>
             </label>
-            <BackupMenu data={data} toast={toast} confirm={(cfg) => setDialog({ kind: "confirm", cfg })} />
+            <BackupMenu data={data} toast={toast} confirm={(cfg) => setDialog({ kind: "confirm", cfg })} autosave={autosave} />
             <button type="button" class="btn primary" onClick={() => setDialog({ kind: "form" })}>{strings.newExpense}</button>
           </div>
         </header>
         {!data.persistent && <p class="banner bad" role="alert">{strings.storageNotPersistent}</p>}
         {data.saveError && <p class="banner bad" role="alert">{strings.saveFailed}</p>}
+        {autosave.status.state === "paused" && (
+          <div class="banner warn" role="alert">
+            <span>{strings.autosave.paused(autosave.status.fileName)}</span>
+            <button type="button" class="btn small" onClick={() => void autosave.resume()}>{strings.autosave.resume}</button>
+          </div>
+        )}
+        {autosave.status.state === "error" && (
+          <div class="banner bad" role="alert">
+            <span>{strings.autosave.error(autosave.status.fileName)}</span>
+            <button type="button" class="btn small" onClick={() => void autosave.choose()}>{strings.autosave.chooseAgain}</button>
+          </div>
+        )}
         {data.migrated > 0 && <p class="banner" role="status">{strings.migrated(data.migrated)}</p>}
         {/* Phone: overview above the list. Desktop: overview in a side column. */}
         <div class="layout">

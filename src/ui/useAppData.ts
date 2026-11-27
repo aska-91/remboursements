@@ -69,6 +69,7 @@ export function useAppData(opened: OpenedStorage): AppData {
         // Merge rather than replace, so a change made while saving is not lost.
         (stored) => {
           setSaveError(false);
+          opened.mirror?.schedule(stored);
           const merged = mergeDocs(docRef.current, stored);
           docRef.current = merged;
           setDoc(merged);
@@ -76,7 +77,7 @@ export function useAppData(opened: OpenedStorage): AppData {
         () => setSaveError(true),
       );
     },
-    [storage],
+    [storage, opened.mirror],
   );
 
   const updateClaim = useCallback<AppData["updateClaim"]>(

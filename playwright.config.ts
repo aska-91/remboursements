@@ -5,7 +5,7 @@ export default defineConfig({
   testDir: "e2e",
   fullyParallel: true,
   reporter: "list",
-  use: { baseURL: "http://localhost:4175", trace: "off", locale: "en-US", timezoneId: "Europe/Paris" },
+  use: { baseURL: "http://localhost:4175", trace: process.env.CI ? "retain-on-failure" : "off", locale: "en-US", timezoneId: "Europe/Paris" },
   projects: [
     { name: "phone", use: { ...devices["Pixel 7"], locale: "en-US" } },
     { name: "desktop", use: { viewport: { width: 1280, height: 900 } } },

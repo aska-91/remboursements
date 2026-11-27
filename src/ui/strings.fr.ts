@@ -1,7 +1,7 @@
 /** Textes de l'interface en français. Mêmes clés que strings.en.ts (vérifié par TypeScript). */
 import type { Strings } from "./strings.en";
 import { sourceNames } from "../domain/messages";
-import { formatDate } from "../domain/dates";
+import { formatDate, formatDateTime } from "../domain/dates";
 import { formatMoney as m } from "../domain/money";
 
 /** 0 et 1 au singulier, comme en français. */
@@ -240,6 +240,22 @@ export const fr: Strings = {
             updated && plural(updated, "mise à jour", "mises à jour"),
             removed && plural(removed, "supprimée", "supprimées"),
           ].filter(Boolean).join(", ")}`,
+  },
+  autosave: {
+    title: "Enregistrement automatique dans un fichier",
+    choose: "Enregistrer automatiquement dans un fichier…",
+    unsupported: "L'enregistrement automatique dans un fichier nécessite Chrome ou Edge sur ordinateur. Ici, utilisez « Exporter une sauvegarde complète ».",
+    help: "Après chaque modification, vos données sont aussi écrites dans un fichier de votre choix (par exemple dans Documents ou un dossier OneDrive / Google Drive). Il résiste à l'effacement des données du navigateur.",
+    active: (file, at) => `Enregistrement dans « ${file} »${at ? ` · dernier enregistrement ${formatDateTime(at)}` : ""}`,
+    stop: "Arrêter l'enregistrement automatique",
+    paused: (file) => `L'enregistrement automatique dans « ${file} » est en pause : le navigateur demande à nouveau votre autorisation.`,
+    resume: "Reprendre",
+    error: (file) => `Impossible d'écrire dans « ${file} » (déplacé, supprimé ou disque plein ?). Choisissez à nouveau le fichier.`,
+    chooseAgain: "Choisir le fichier",
+    started: (file) => `Enregistrement automatique dans « ${file} » activé`,
+    stopped: "Enregistrement automatique arrêté",
+    suggestedName: "remboursements-donnees.json",
+    fileType: "Données Mes remboursements",
   },
   csv: {
     headers: [

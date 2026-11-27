@@ -2,7 +2,7 @@
 import type { Category, ClaimStatus, ItemState, RefundMode, Source } from "../domain/types";
 import type { ListFilter } from "../domain/list";
 import { sourceNames } from "../domain/messages";
-import { formatDate } from "../domain/dates";
+import { formatDate, formatDateTime } from "../domain/dates";
 import { formatMoney as m } from "../domain/money";
 
 const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
@@ -247,6 +247,22 @@ export const en = {
             updated && `${updated} updated`,
             removed && `${removed} removed`,
           ].filter(Boolean).join(", ")}`,
+  },
+  autosave: {
+    title: "Automatic save to a file",
+    choose: "Save automatically to a file…",
+    unsupported: "Automatic saving to a file needs Chrome or Edge on a computer. Here, use “Export a full backup”.",
+    help: "After every change, your data is also written to a file of your choice (for example in Documents or a OneDrive / Google Drive folder). It survives clearing the browser's data.",
+    active: (file: string, at?: number) => `Saving to “${file}”${at ? ` · last saved ${formatDateTime(at)}` : ""}`,
+    stop: "Stop automatic saving",
+    paused: (file: string) => `Automatic saving to “${file}” is paused: the browser needs your permission again.`,
+    resume: "Resume",
+    error: (file: string) => `Could not write to “${file}” (moved, deleted or disk full?). Choose the file again.`,
+    chooseAgain: "Choose the file",
+    started: (file: string) => `Automatic saving to “${file}” started`,
+    stopped: "Automatic saving stopped",
+    suggestedName: "refund-tracker-data.json",
+    fileType: "Refund Tracker data",
   },
   csv: {
     headers: [
