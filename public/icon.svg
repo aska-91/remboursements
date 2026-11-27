@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="112" fill="#0e5a63"/>
+  <!-- refund arrow around a euro sign -->
+  <g transform="translate(43 25.6) scale(0.9)">
+    <path d="M371 160A150 150 0 1 0 379 342" fill="none" stroke="#e1f0f1" stroke-width="32" stroke-linecap="round"/>
+    <path d="M371 92v68h-68" fill="none" stroke="#e1f0f1" stroke-width="32" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M300 204A64 64 0 1 0 300 308M188 238h92M188 274h84" fill="none" stroke="#ffffff" stroke-width="26" stroke-linecap="round"/>
+  </g>
+</svg>
