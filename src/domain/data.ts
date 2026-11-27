@@ -113,3 +113,28 @@ export function mergeDocs(a: Doc, b: Doc): Doc {
   const claims = [...byId.values()].filter((c) => !(deleted[c.id] && deleted[c.id]! > c.mod));
   return { version: 3, claims, deleted };
 }
+
+export interface ImportResult {
+  doc: Doc;
+  /** Expenses that did not exist here. */
+  added: number;
+  /** Existing expenses replaced by a more recent version from the file. */
+  updated: number;
+  /** Existing expenses removed because the file records a later deletion. */
+  removed: number;
+}
+
+/** Merges a backup into the current data and counts what changed. */
+export function importBackup(current: Doc, incoming: Doc): ImportResult {
+  const doc = mergeDocs(current, incoming);
+  const before = new Map(current.claims.map((c) => [c.id, c]));
+  const after = new Set(doc.claims.map((c) => c.id));
+  let added = 0, updated = 0;
+  for (const c of doc.claims) {
+    const prev = before.get(c.id);
+    if (!prev) added++;
+    else if (prev !== c) updated++;
+  }
+  const removed = current.claims.filter((c) => !after.has(c.id)).length;
+  return { doc, added, updated, removed };
+}

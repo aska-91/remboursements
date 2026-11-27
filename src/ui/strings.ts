@@ -1,5 +1,5 @@
 /** All user-facing text lives here so another language can be added later. */
-import type { Category, ClaimStatus, RefundMode, Source } from "../domain/types";
+import type { Category, ClaimStatus, ItemState, RefundMode, Source } from "../domain/types";
 import type { ListFilter } from "../domain/list";
 import { SOURCE_NAMES } from "../domain/messages";
 import { formatDate } from "../domain/dates";
@@ -220,6 +220,39 @@ export const strings = {
     remaining: "To receive",
     outOfPocket: "Out-of-pocket",
     empty: "Totals appear with the first expense.",
+  },
+
+  // ---------- backup ----------
+  backup: {
+    menu: "Backup",
+    exportCsv: "Export to CSV (spreadsheet)",
+    exportJson: "Export a full backup",
+    importJson: "Import a backup",
+    hint: "Data stays on this device. Export a backup regularly to keep a copy elsewhere.",
+    csvFile: (date: string) => `refund-tracker-${date}.csv`,
+    jsonFile: (date: string) => `refund-tracker-backup-${date}.json`,
+    exported: "File saved",
+    invalidFile: "This file is not a valid backup",
+    imported: (added: number, updated: number, removed: number) =>
+      added + updated + removed === 0
+        ? "Backup imported: nothing new"
+        : `Backup imported: ${[
+            added && plural(added, "expense") + " added",
+            updated && `${updated} updated`,
+            removed && `${removed} removed`,
+          ].filter(Boolean).join(", ")}`,
+  },
+  csv: {
+    headers: [
+      "Date", "Description", "Category", "Reference", "Amount paid", "Expense status", "Archived",
+      "Source", "Expected amount", "Expected date", "Amount received", "Missing", "Date received", "Line status",
+      "Refusal reason", "Return before", "Returned on", "Tracking number", "Send claim before", "Claim sent on", "Notes", "History",
+    ],
+    yes: "yes",
+    no: "no",
+    itemStatus: {
+      received: "Received", gap: "Gap", written_off: "Out-of-pocket", refused: "Refused", pending: "Pending", late: "Late",
+    } satisfies Record<ItemState, string>,
   },
 
   // ---------- expense form ----------

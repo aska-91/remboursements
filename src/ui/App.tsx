@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "preact/hooks";
 import * as A from "../domain/actions";
 import { openStorage, type OpenedStorage } from "../storage/startup";
 import { makeClaimActions, type DialogSpec } from "./claimActions";
+import { BackupMenu } from "./BackupMenu";
 import { ClaimList } from "./ClaimList";
 import { Sources, Tiles, ToDo, YearTotals } from "./Overview";
 import { ActionDialog } from "./dialogs/ActionDialog";
@@ -36,7 +37,10 @@ function Main({ opened }: { opened: OpenedStorage }) {
             <h1>{strings.appName}</h1>
             <p class="sub">{strings.tagline}</p>
           </div>
-          <button type="button" class="btn primary" onClick={() => setDialog({ kind: "form" })}>{strings.newExpense}</button>
+          <div class="row">
+            <BackupMenu data={data} toast={toast} />
+            <button type="button" class="btn primary" onClick={() => setDialog({ kind: "form" })}>{strings.newExpense}</button>
+          </div>
         </header>
         {!data.persistent && <p class="banner bad" role="alert">{strings.storageNotPersistent}</p>}
         {data.saveError && <p class="banner bad" role="alert">{strings.saveFailed}</p>}
