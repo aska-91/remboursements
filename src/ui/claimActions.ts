@@ -9,7 +9,8 @@ import { strings } from "./strings";
 export type DialogSpec =
   | { kind: "action"; cfg: ActionConfig }
   | { kind: "confirm"; cfg: ConfirmConfig }
-  | { kind: "receipt"; claimId: string; itemId: string };
+  | { kind: "receipt"; claimId: string; itemId: string }
+  | { kind: "form"; claimId?: string };
 
 /** Everything a card (or the to-do list) can do. */
 export interface ClaimActions {
@@ -35,7 +36,6 @@ export function makeClaimActions(
   data: AppData,
   open: (d: DialogSpec) => void,
   toast: (msg: string) => void,
-  onEdit?: (c: Claim) => void,
 ): ClaimActions {
   const d = strings.dialog;
   const src = (i: Item) => strings.sources[i.source];
@@ -141,6 +141,6 @@ export function makeClaimActions(
           },
         },
       }),
-    edit: onEdit,
+    edit: (c) => open({ kind: "form", claimId: c.id }),
   };
 }

@@ -9,7 +9,14 @@ import { strings } from "./strings";
 const S = strings;
 const categoryLabel = (c: Category) => S.categories[c];
 
-export function ClaimList({ claims, today, actions }: { claims: Claim[]; today: Ymd; actions: ClaimActions }) {
+interface Props {
+  claims: Claim[];
+  today: Ymd;
+  actions: ClaimActions;
+  onAdd: () => void;
+}
+
+export function ClaimList({ claims, today, actions, onAdd }: Props) {
   const [filter, setFilter] = useState<ListFilter>("in_progress");
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState<Category | "all">("all");
@@ -48,6 +55,7 @@ export function ClaimList({ claims, today, actions }: { claims: Claim[]; today: 
         ) : (
           <div class="empty">
             <p>{claims.length ? S.emptyView : S.emptyAll}</p>
+            {!claims.length && <button type="button" class="btn primary" onClick={onAdd}>{S.addFirst}</button>}
           </div>
         )}
       </div>

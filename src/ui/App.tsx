@@ -4,6 +4,7 @@ import { openStorage, type OpenedStorage } from "../storage/startup";
 import { makeClaimActions, type DialogSpec } from "./claimActions";
 import { ClaimList } from "./ClaimList";
 import { ActionDialog } from "./dialogs/ActionDialog";
+import { ClaimForm } from "./dialogs/ClaimForm";
 import { ConfirmDialog } from "./dialogs/ConfirmDialog";
 import { ReceiptDialog } from "./dialogs/ReceiptDialog";
 import { Toast, useToast } from "./components/Toast";
@@ -34,12 +35,13 @@ function Main({ opened }: { opened: OpenedStorage }) {
             <h1>{strings.appName}</h1>
             <p class="sub">{strings.tagline}</p>
           </div>
+          <button type="button" class="btn primary" onClick={() => setDialog({ kind: "form" })}>{strings.newExpense}</button>
         </header>
         {!data.persistent && <p class="banner bad" role="alert">{strings.storageNotPersistent}</p>}
         {data.saveError && <p class="banner bad" role="alert">{strings.saveFailed}</p>}
         {data.migrated > 0 && <p class="banner" role="status">{strings.migrated(data.migrated)}</p>}
         <main>
-          <ClaimList claims={data.doc.claims} today={data.today} actions={actions} />
+          <ClaimList claims={data.doc.claims} today={data.today} actions={actions} onAdd={() => setDialog({ kind: "form" })} />
         </main>
       </div>
 
@@ -54,6 +56,23 @@ function Main({ opened }: { opened: OpenedStorage }) {
             onOk={(amount, date, writeOff) => {
               data.updateClaim(c.id, (x, now) => A.recordReceipt(x, i.id, amount, date, writeOff, now));
               toast(strings.toast.received);
+            }} />
+        );
+      })()}
+      {dialog?.kind === "form" && (() => {
+        const editing = dialog.claimId ? data.doc.claims.find((x) => x.id === dialog.claimId) : undefined;
+        if (dialog.claimId && !editing) return null;
+        return (
+          <ClaimForm claim={editing} today={data.today} onClose={close}
+            onSave={(input) => {
+              if (editing) {
+                data.updateClaim(editing.id, (x, now) => A.editClaim(x, input, now));
+                toast(strings.toast.edited);
+              } else {
+                // New expenses go first, as in the prototype.
+                data.updateDoc((d, now) => ({ ...d, claims: [A.createClaim(input, now), ...d.claims] }));
+                toast(strings.toast.added);
+              }
             }} />
         );
       })()}
