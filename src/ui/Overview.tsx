@@ -127,7 +127,7 @@ export function YearTotals({ claims, today }: { claims: Claim[]; today: Ymd }) {
     <details class="panel yearly">
       <summary>{y.title}</summary>
       {years.length ? (
-        <div class="tablewrap">
+        <div class="tablewrap" tabIndex={0} role="region" aria-label={y.title}>
           <table>
             <thead>
               <tr>

@@ -148,3 +148,31 @@ test("works offline once loaded", async ({ page, context }) => {
   await expect(page.locator(".card").first()).toBeVisible();
   await context.setOffline(false);
 });
+
+test("Chrome reports the app as installable (manifest, icons, service worker)", async ({ page, browserName }) => {
+  test.skip(browserName !== "chromium", "installability check is Chromium-only");
+  await start(page);
+  await page.evaluate(() => navigator.serviceWorker.ready);
+  const cdp = await page.context().newCDPSession(page);
+  const { installabilityErrors } = await cdp.send("Page.getInstallabilityErrors");
+  expect(installabilityErrors).toEqual([]);
+  const manifest = await (await page.request.get("/manifest.webmanifest")).json();
+  const sizes = manifest.icons.map((i: { sizes: string }) => i.sizes);
+  expect(sizes).toEqual(expect.arrayContaining(["192x192", "512x512"]));
+  for (const icon of manifest.icons) expect((await page.request.get(`/${icon.src}`)).ok()).toBe(true);
+});
+
+for (const scheme of ["light", "dark"] as const) {
+  test(`no accessibility violations (axe, ${scheme} theme, list and dialog)`, async ({ page }) => {
+    const { default: AxeBuilder } = await import("@axe-core/playwright");
+    await page.emulateMedia({ colorScheme: scheme });
+    await start(page, { demo: true });
+    await page.locator("button.chip", { hasText: "All" }).click();
+    await page.locator(".yearly summary").click();
+    const list = await new AxeBuilder({ page }).analyze();
+    expect(list.violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(" ")).slice(0, 3).join(" | ")}`)).toEqual([]);
+    await page.getByRole("button", { name: "+ New expense" }).click();
+    const dialog = await new AxeBuilder({ page }).include("dialog").analyze();
+    expect(dialog.violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(" ")).slice(0, 3).join(" | ")}`)).toEqual([]);
+  });
+}
