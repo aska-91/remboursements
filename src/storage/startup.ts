@@ -4,6 +4,8 @@ import { today } from "../domain/dates";
 import type { Storage } from "./Storage";
 import { getMeta, indexedDbStorage, openDatabase, setMeta, type Db } from "./indexedDb";
 import { memoryStorage } from "./memory";
+import { FileMirror, type FileHandleLike } from "./fileMirror";
+import { buildBackup } from "../export/json";
 
 /** Keys the single-file prototype used in localStorage. */
 export const PROTOTYPE_KEYS = ["remboursements-v2", "remboursements-v1"];
@@ -16,7 +18,11 @@ export interface OpenedStorage {
   persistent: boolean;
   /** Number of expenses taken over from the prototype on this start (0 if none). */
   migrated: number;
+  /** Automatic copy to a file of the user's choice; absent when IndexedDB is unavailable. */
+  mirror?: FileMirror;
 }
+
+const AUTOSAVE_HANDLE = "autoSaveFile";
 
 /**
  * Copies the prototype's data the first time the app starts, if it was used in
@@ -59,5 +65,15 @@ export async function openStorage(): Promise<OpenedStorage> {
   const migrated = await migratePrototype(db, storage, browserLocalStorage());
   // Ask the browser not to clear our data when space runs low (granted silently or not at all).
   void navigator.storage?.persist?.().catch(() => false);
-  return { storage, doc: await storage.load(), persistent: true, migrated };
+  const doc = await storage.load();
+  const mirror = new FileMirror(
+    {
+      get: async () => (await getMeta(db, AUTOSAVE_HANDLE)) as FileHandleLike | undefined,
+      set: (h) => setMeta(db, AUTOSAVE_HANDLE, h),
+    },
+    (d) => buildBackup(d, Date.now()),
+  );
+  // Not awaited: the app shows at once, the file catches up in the background.
+  void mirror.init(doc);
+  return { storage, doc, persistent: true, migrated, mirror };
 }

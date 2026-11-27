@@ -58,10 +58,12 @@ Usage pour une seule personne pour l'instant (pas de partage). Doit fonctionner 
 ## Pile et structure (validées)
 TypeScript strict, Vite, Preact, IndexedDB (`idb`), vite-plugin-pwa, Vitest, Playwright pour vérifier les rendus téléphone (390 px) et ordinateur (1280 px).
 - `src/domain/` : règles métier pures (aucune dépendance au DOM ni au stockage), couvertes par les tests dans `tests/`.
-- `src/storage/` : interface de stockage remplaçable + implémentation IndexedDB.
+- `src/storage/` : interface de stockage remplaçable + implémentation IndexedDB ; `fileMirror.ts` recopie automatiquement les données dans un fichier choisi par l'utilisateur (File System Access API, Chrome/Edge sur ordinateur), IndexedDB restant la source principale.
 - `src/export/` : CSV et JSON.
 - `src/ui/` : écrans Preact, `strings.ts`, styles.
 - Les tests tournent dans un fuseau éloigné de Paris (`TZ=Pacific/Auckland`) pour détecter toute dépendance au fuseau de la machine.
+
+Déploiement : GitHub Pages via `.github/workflows/deploy.yml` à chaque mise à jour de `main` ; les pull requests lancent les tests (`checks.yml`).
 
 Commandes : `npm run dev`, `npm test` (règles métier, Vitest), `npm run test:e2e` (navigateur, Playwright : téléphone 390 px et ordinateur 1280 px, sur le build de production), `npm run build`.
 

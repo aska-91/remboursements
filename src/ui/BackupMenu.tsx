@@ -4,6 +4,7 @@ import { buildBackup, parseBackup } from "../export/json";
 import { importBackup } from "../domain/data";
 import type { AppData } from "./useAppData";
 import type { ConfirmConfig } from "./dialogs/ConfirmDialog";
+import type { AutoSave } from "./useAutoSave";
 import { strings } from "./strings";
 
 
@@ -23,9 +24,10 @@ interface Props {
   data: AppData;
   toast: (msg: string) => void;
   confirm: (cfg: ConfirmConfig) => void;
+  autosave: AutoSave;
 }
 
-export function BackupMenu({ data, toast, confirm }: Props) {
+export function BackupMenu({ data, toast, confirm, autosave }: Props) {
   const menu = useRef<HTMLDetailsElement>(null);
   const file = useRef<HTMLInputElement>(null);
   const close = () => { if (menu.current) menu.current.open = false; };
@@ -86,6 +88,29 @@ export function BackupMenu({ data, toast, confirm }: Props) {
         <button type="button" onClick={exportJson}>{strings.backup.exportJson}</button>
         <button type="button" onClick={() => { close(); file.current?.click(); }}>{strings.backup.importJson}</button>
         <p class="hint">{strings.backup.hint}</p>
+        <div class="menu-section" aria-label={strings.autosave.title} role="group">
+          <strong>{strings.autosave.title}</strong>
+          {!autosave.supported ? (
+            <p class="hint">{strings.autosave.unsupported}</p>
+          ) : autosave.status.state === "off" ? (
+            <>
+              <button type="button" onClick={() => { close(); void autosave.choose(); }}>{strings.autosave.choose}</button>
+              <p class="hint">{strings.autosave.help}</p>
+            </>
+          ) : (
+            <>
+              <p class={`hint${autosave.status.state === "active" ? " autosave-state" : ""}`} role="status">
+                {autosave.status.state === "active"
+                  ? strings.autosave.active(autosave.status.fileName, autosave.status.lastSaved)
+                  : autosave.status.state === "paused"
+                    ? strings.autosave.paused(autosave.status.fileName)
+                    : strings.autosave.error(autosave.status.fileName)}
+              </p>
+              <button type="button" onClick={() => { close(); void autosave.choose(); }}>{strings.autosave.chooseAgain}</button>
+              <button type="button" onClick={() => { close(); void autosave.stop(); }}>{strings.autosave.stop}</button>
+            </>
+          )}
+        </div>
       </div>
       <input ref={file} type="file" accept=".json,application/json" hidden onChange={onFile} />
     </details>
