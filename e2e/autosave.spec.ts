@@ -1,5 +1,5 @@
 import type { Page } from "@playwright/test";
-import { expect, start, test } from "./fixtures";
+import { expect, saved, start, test } from "./fixtures";
 
 /** Replaces the native file picker with a file in the browser's private file system (same API). */
 async function fakePicker(page: Page) {
@@ -39,6 +39,7 @@ test("saves to the chosen file after every change, and again after a restart", a
   await expect.poll(() => readFile(page), { timeout: 5000 }).toContain("Called the mutuelle");
 
   // After a restart the same file is used again.
+  await saved(page);
   await page.reload();
   await page.locator(".card").first().waitFor();
   await openMenu(page);
