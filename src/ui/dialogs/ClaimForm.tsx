@@ -7,7 +7,6 @@ import { toCents, toEuros } from "../../domain/money";
 import { Dialog } from "../components/Dialog";
 import { strings } from "../strings";
 
-const F = strings.form;
 
 /** One editable refund line. Amounts stay as typed text until saving. */
 interface Row {
@@ -99,55 +98,55 @@ export function ClaimForm({ claim, today, onSave, onClose }: Props) {
   };
 
   return (
-    <Dialog title={editing ? F.editTitle : F.newTitle} size="wide" onClose={onClose}>
+    <Dialog title={editing ? strings.form.editTitle : strings.form.newTitle} size="wide" onClose={onClose}>
       <form class="stack" onSubmit={submit}>
         <div class="grid2">
-          <label class="f">{F.date}<input type="date" required value={date} onInput={val(setDate)} /></label>
+          <label class="f">{strings.form.date}<input type="date" required value={date} onInput={val(setDate)} /></label>
           <label class="f">
-            {F.category}
+            {strings.form.category}
             <select value={category} onChange={val((v) => changeCategory(v as Category))}>
               {CATEGORIES.map((c) => <option key={c} value={c}>{strings.categories[c]}</option>)}
             </select>
           </label>
         </div>
         <label class="f">
-          {F.label}
-          <input type="text" required maxLength={120} placeholder={F.labelPlaceholder} data-autofocus value={label} onInput={val(setLabel)} />
+          {strings.form.label}
+          <input type="text" required maxLength={120} placeholder={strings.form.labelPlaceholder} data-autofocus value={label} onInput={val(setLabel)} />
         </label>
         <div class="grid2">
-          <label class="f">{F.amount}<input type="number" step="0.01" min="0" required inputMode="decimal" value={amount} onInput={val(changeAmount)} /></label>
-          <label class="f">{F.ref}<input type="text" maxLength={60} value={ref} onInput={val(setRef)} /></label>
+          <label class="f">{strings.form.amount}<input type="number" step="0.01" min="0" required inputMode="decimal" value={amount} onInput={val(changeAmount)} /></label>
+          <label class="f">{strings.form.ref}<input type="text" maxLength={60} value={ref} onInput={val(setRef)} /></label>
         </div>
 
         {shop ? (
           <fieldset class="block">
-            <legend>{F.returnBlock}</legend>
+            <legend>{strings.form.returnBlock}</legend>
             <div class="grid2">
-              <label class="f">{F.returnBy}<input type="date" value={returnBy} onInput={val(setReturnBy)} /></label>
+              <label class="f">{strings.form.returnBy}<input type="date" value={returnBy} onInput={val(setReturnBy)} /></label>
               <label class="f">
-                {F.refundMode}
+                {strings.form.refundMode}
                 <select value={refundMode} onChange={val((v) => setRefundMode(v as RefundMode))}>
                   {REFUND_MODES.map((m) => <option key={m} value={m}>{strings.refundModeOptions[m]}</option>)}
                 </select>
               </label>
-              <label class="f">{F.returnedDate}<input type="date" value={returnedDate} onInput={val(setReturnedDate)} /></label>
-              <label class="f">{F.tracking}<input type="text" maxLength={60} value={tracking} onInput={val(setTracking)} /></label>
+              <label class="f">{strings.form.returnedDate}<input type="date" value={returnedDate} onInput={val(setReturnedDate)} /></label>
+              <label class="f">{strings.form.tracking}<input type="text" maxLength={60} value={tracking} onInput={val(setTracking)} /></label>
             </div>
-            <p class="hint">{F.returnHint}</p>
+            <p class="hint">{strings.form.returnHint}</p>
           </fieldset>
         ) : (
           <div class="block">
             <label class="chk">
               <input type="checkbox" checked={needsRequest} onChange={(e) => changeNeedsRequest((e.target as HTMLInputElement).checked)} />
-              <span>{F.needsRequest}</span>
+              <span>{strings.form.needsRequest}</span>
             </label>
             {needsRequest && (
               <>
                 <div class="grid2">
-                  <label class="f">{F.claimBy}<input type="date" value={claimBy} onInput={val(setClaimBy)} /></label>
-                  <label class="f">{F.sentDate}<input type="date" value={sentDate} onInput={val(setSentDate)} /></label>
+                  <label class="f">{strings.form.claimBy}<input type="date" value={claimBy} onInput={val(setClaimBy)} /></label>
+                  <label class="f">{strings.form.sentDate}<input type="date" value={sentDate} onInput={val(setSentDate)} /></label>
                 </div>
-                <p class="hint">{F.requestHint}</p>
+                <p class="hint">{strings.form.requestHint}</p>
               </>
             )}
           </div>
@@ -155,37 +154,37 @@ export function ClaimForm({ claim, today, onSave, onClose }: Props) {
 
         <fieldset class="lines">
           <div class="row spread">
-            <legend>{F.refundsBlock}</legend>
-            <button type="button" class="btn small" onClick={addRow}>{F.addLine}</button>
+            <legend>{strings.form.refundsBlock}</legend>
+            <button type="button" class="btn small" onClick={addRow}>{strings.form.addLine}</button>
           </div>
           {rows.map((r, k) => (
-            <div class="exp-row" key={r.id} role="group" aria-label={F.lineLabel(k + 1)}>
+            <div class="exp-row" key={r.id} role="group" aria-label={strings.form.lineLabel(k + 1)}>
               <label class="f">
-                {F.source}
+                {strings.form.source}
                 <select value={r.source} onChange={val((v) => changeSource(r, v as Source))}>
                   {SOURCES.map((s) => <option key={s} value={s}>{strings.sources[s]}</option>)}
                 </select>
               </label>
               <label class="f">
-                {F.expected}
+                {strings.form.expected}
                 <input type="number" step="0.01" min="0" inputMode="decimal" value={r.expected} onInput={val((v) => setRow(r.id, { expected: v }))} />
               </label>
               <label class="f">
-                {F.due}
+                {strings.form.due}
                 <input type="date" value={r.due} onInput={val((v) => setRow(r.id, { due: v, dueTouched: true }))} />
               </label>
               <button type="button" class="btn small rm" onClick={() => setRows(rows.filter((x) => x.id !== r.id))}>
-                {F.removeLine}
+                {strings.form.removeLine}
               </button>
             </div>
           ))}
-          <p class="hint">{F.refundsHint}</p>
+          <p class="hint">{strings.form.refundsHint}</p>
         </fieldset>
 
-        <label class="f">{F.notes}<textarea rows={2} maxLength={400} value={notes} onInput={val(setNotes)} /></label>
+        <label class="f">{strings.form.notes}<textarea rows={2} maxLength={400} value={notes} onInput={val(setNotes)} /></label>
         <div class="row end">
           <button type="button" class="btn" onClick={onClose}>{strings.dialog.cancel}</button>
-          <button type="submit" class="btn primary">{F.save}</button>
+          <button type="submit" class="btn primary">{strings.form.save}</button>
         </div>
       </form>
     </Dialog>

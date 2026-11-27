@@ -7,7 +7,6 @@ import { formatMoney } from "../domain/money";
 import type { ClaimActions } from "./claimActions";
 import { strings } from "./strings";
 
-const S = strings;
 const ALERTS_SHOWN = 6;
 
 function Tile({ k, v, n, tone = "" }: { k: string; v: string; n: string; tone?: string }) {
@@ -23,7 +22,7 @@ function Tile({ k, v, n, tone = "" }: { k: string; v: string; n: string; tone?: 
 export function Tiles({ claims, today }: { claims: Claim[]; today: Ymd }) {
   const s = summary(claims, today);
   const todo = buildAlerts(claims, today).length;
-  const o = S.overview;
+  const o = strings.overview;
   return (
     <section class="tiles" aria-label={o.label}>
       <Tile tone="main" k={o.remaining} v={formatMoney(s.remaining)} n={o.remainingSub(s.remainingCount)} />
@@ -36,28 +35,28 @@ export function Tiles({ claims, today }: { claims: Claim[]; today: Ymd }) {
 
 /** Text and buttons of one to-do entry. */
 function alertView(a: Alert, c: Claim, actions: ClaimActions): { text: string; buttons: [string, () => void][] } {
-  const A = S.alerts;
-  const act = S.actions;
+  const A = strings.alerts;
+  const act = strings.actions;
   switch (a.kind) {
     case "return_overdue":
       return { text: A.returnOverdue(-a.days, c.label), buttons: [[act.markReturned, () => actions.markReturned(c)]] };
     case "return_soon":
-      return { text: A.returnSoon(S.inDays(a.days), c.label), buttons: [[act.markReturned, () => actions.markReturned(c)]] };
+      return { text: A.returnSoon(strings.inDays(a.days), c.label), buttons: [[act.markReturned, () => actions.markReturned(c)]] };
     case "request_overdue":
       return { text: A.requestOverdue(-a.days, c.label), buttons: [[act.markSent, () => actions.markSent(c)]] };
     case "request_soon":
-      return { text: A.requestSoon(a.deadline, S.inDays(a.days), c.label), buttons: [[act.markSent, () => actions.markSent(c)]] };
+      return { text: A.requestSoon(a.deadline, strings.inDays(a.days), c.label), buttons: [[act.markSent, () => actions.markSent(c)]] };
     case "item_late": {
       const i = c.items.find((x) => x.id === a.itemId)!;
       return {
-        text: A.itemLate(S.sources[a.source], -a.days, a.amount, c.label),
+        text: A.itemLate(strings.sources[a.source], -a.days, a.amount, c.label),
         buttons: [[act.chase, () => actions.chase(c, i)], [act.markReceived, () => actions.receive(c, i)]],
       };
     }
     case "item_gap": {
       const i = c.items.find((x) => x.id === a.itemId)!;
       return {
-        text: A.itemGap(a.amount, S.sources[a.source], c.label),
+        text: A.itemGap(a.amount, strings.sources[a.source], c.label),
         buttons: [[act.chase, () => actions.chase(c, i)], [act.writeOff, () => actions.writeOff(c, i)]],
       };
     }
@@ -72,7 +71,7 @@ export function ToDo({ claims, today, actions }: { claims: Claim[]; today: Ymd; 
   const shown = showAll ? alerts : alerts.slice(0, ALERTS_SHOWN);
   return (
     <section class="panel alerts" aria-labelledby="todo-title">
-      <h2 id="todo-title">{S.alerts.title(alerts.length)}</h2>
+      <h2 id="todo-title">{strings.alerts.title(alerts.length)}</h2>
       <ul class="alert-list">
         {shown.map((a) => {
           const v = alertView(a, byId.get(a.claimId)!, actions);
@@ -90,7 +89,7 @@ export function ToDo({ claims, today, actions }: { claims: Claim[]; today: Ymd; 
       </ul>
       {alerts.length > ALERTS_SHOWN && (
         <button type="button" class="btn small" aria-expanded={showAll} onClick={() => setShowAll(!showAll)}>
-          {showAll ? S.alerts.showLess : S.alerts.showMore(alerts.length - ALERTS_SHOWN)}
+          {showAll ? strings.alerts.showLess : strings.alerts.showMore(alerts.length - ALERTS_SHOWN)}
         </button>
       )}
     </section>
@@ -103,19 +102,19 @@ export function Sources({ claims, today }: { claims: Claim[]; today: Ymd }) {
   const rows = SOURCES.filter((s) => totals[s] > 0);
   return (
     <section class="panel sources" aria-labelledby="sources-title">
-      <h2 id="sources-title">{S.overview.bySource}</h2>
+      <h2 id="sources-title">{strings.overview.bySource}</h2>
       {rows.length ? (
         <ul class="src-list">
           {rows.map((s) => (
             <li class="src" key={s}>
-              <span>{S.sources[s]}</span>
+              <span>{strings.sources[s]}</span>
               <span class="bar" aria-hidden="true"><i style={{ width: `${Math.max(4, (totals[s] / max) * 100)}%` }} /></span>
               <span class="amt">{formatMoney(totals[s])}</span>
             </li>
           ))}
         </ul>
       ) : (
-        <p class="meta">{S.overview.nothingPending}</p>
+        <p class="meta">{strings.overview.nothingPending}</p>
       )}
     </section>
   );
@@ -123,7 +122,7 @@ export function Sources({ claims, today }: { claims: Claim[]; today: Ymd }) {
 
 export function YearTotals({ claims, today }: { claims: Claim[]; today: Ymd }) {
   const years = yearlyTotals(claims, today);
-  const y = S.yearly;
+  const y = strings.yearly;
   return (
     <details class="panel yearly">
       <summary>{y.title}</summary>

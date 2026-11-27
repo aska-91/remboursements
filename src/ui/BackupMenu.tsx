@@ -5,7 +5,6 @@ import { importBackup } from "../domain/data";
 import type { AppData } from "./useAppData";
 import { strings } from "./strings";
 
-const B = strings.backup;
 
 /** Saves text as a file through the browser's download (works offline, nothing is sent anywhere). */
 function download(name: string, text: string, type: string) {
@@ -37,13 +36,13 @@ export function BackupMenu({ data, toast }: { data: AppData; toast: (msg: string
 
   const exportCsv = () => {
     close();
-    download(B.csvFile(data.today), buildCsv(data.doc.claims, data.today), "text/csv;charset=utf-8");
-    toast(B.exported);
+    download(strings.backup.csvFile(data.today), buildCsv(data.doc.claims, data.today), "text/csv;charset=utf-8");
+    toast(strings.backup.exported);
   };
   const exportJson = () => {
     close();
-    download(B.jsonFile(data.today), buildBackup(data.doc, Date.now()), "application/json");
-    toast(B.exported);
+    download(strings.backup.jsonFile(data.today), buildBackup(data.doc, Date.now()), "application/json");
+    toast(strings.backup.exported);
   };
   const onFile = async () => {
     const f = file.current?.files?.[0];
@@ -56,9 +55,9 @@ export function BackupMenu({ data, toast }: { data: AppData; toast: (msg: string
         result = r;
         return r.doc;
       });
-      toast(B.imported(result.added, result.updated, result.removed));
+      toast(strings.backup.imported(result.added, result.updated, result.removed));
     } catch {
-      toast(B.invalidFile);
+      toast(strings.backup.invalidFile);
     } finally {
       file.current!.value = "";
     }
@@ -66,12 +65,12 @@ export function BackupMenu({ data, toast }: { data: AppData; toast: (msg: string
 
   return (
     <details class="menu" ref={menu}>
-      <summary class="btn">{B.menu}</summary>
-      <div class="menu-pop" role="group" aria-label={B.menu}>
-        <button type="button" onClick={exportCsv}>{B.exportCsv}</button>
-        <button type="button" onClick={exportJson}>{B.exportJson}</button>
-        <button type="button" onClick={() => { close(); file.current?.click(); }}>{B.importJson}</button>
-        <p class="hint">{B.hint}</p>
+      <summary class="btn">{strings.backup.menu}</summary>
+      <div class="menu-pop" role="group" aria-label={strings.backup.menu}>
+        <button type="button" onClick={exportCsv}>{strings.backup.exportCsv}</button>
+        <button type="button" onClick={exportJson}>{strings.backup.exportJson}</button>
+        <button type="button" onClick={() => { close(); file.current?.click(); }}>{strings.backup.importJson}</button>
+        <p class="hint">{strings.backup.hint}</p>
       </div>
       <input ref={file} type="file" accept=".json,application/json" hidden onChange={onFile} />
     </details>

@@ -11,7 +11,7 @@ import { ConfirmDialog } from "./dialogs/ConfirmDialog";
 import { ReceiptDialog } from "./dialogs/ReceiptDialog";
 import { Toast, useToast } from "./components/Toast";
 import { useAppData } from "./useAppData";
-import { strings } from "./strings";
+import { applyLang, getLang, LANGS, strings, type Lang } from "./strings";
 
 export function App() {
   const [opened, setOpened] = useState<OpenedStorage | null>(null);
@@ -24,6 +24,11 @@ export function App() {
 
 function Main({ opened }: { opened: OpenedStorage }) {
   const data = useAppData(opened);
+  const [lang, setLangState] = useState<Lang>(getLang());
+  const changeLang = (l: Lang) => {
+    applyLang(l);
+    setLangState(l);
+  };
   const [dialog, setDialog] = useState<DialogSpec | null>(null);
   const [toastMsg, toast] = useToast();
   const actions = useMemo(() => makeClaimActions(data, setDialog, toast), [data]);
@@ -38,6 +43,12 @@ function Main({ opened }: { opened: OpenedStorage }) {
             <p class="sub">{strings.tagline}</p>
           </div>
           <div class="row">
+            <label class="lang">
+              <span class="sr-only">{strings.languageLabel}</span>
+              <select value={lang} aria-label={strings.languageLabel} onChange={(e) => changeLang((e.target as HTMLSelectElement).value as Lang)}>
+                {LANGS.map((l) => <option key={l} value={l} lang={l}>{l === "en" ? "English" : "Français"}</option>)}
+              </select>
+            </label>
             <BackupMenu data={data} toast={toast} />
             <button type="button" class="btn primary" onClick={() => setDialog({ kind: "form" })}>{strings.newExpense}</button>
           </div>
@@ -54,7 +65,7 @@ function Main({ opened }: { opened: OpenedStorage }) {
             <YearTotals claims={data.doc.claims} today={data.today} />
           </aside>
           <main class="main">
-            <ClaimList claims={data.doc.claims} today={data.today} actions={actions} onAdd={() => setDialog({ kind: "form" })} />
+            <ClaimList lang={lang} claims={data.doc.claims} today={data.today} actions={actions} onAdd={() => setDialog({ kind: "form" })} />
           </main>
         </div>
       </div>

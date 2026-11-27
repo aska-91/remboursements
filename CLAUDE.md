@@ -7,9 +7,9 @@ Application personnelle pour ne jamais perdre de vue une dépense dont on attend
 
 Usage pour une seule personne pour l'instant (pas de partage). Doit fonctionner aussi bien sur Android que sur ordinateur (mise en page adaptative, tactile et clavier/souris).
 
-**Langues** : interface de l'application en **anglais** (tous les textes dans `src/ui/strings.ts`). Code, noms et messages de commit en anglais. Les échanges avec l'utilisateur restent en **français**.
+**Langues** : interface **bilingue anglais / français**, au choix de l'utilisateur (sélecteur dans l'en-tête, choix mémorisé ; par défaut la langue de l'appareil). Tous les textes sont dans `src/ui/strings.en.ts` et `src/ui/strings.fr.ts` (mêmes clés, vérifiées par TypeScript) ; lire `strings.x` au moment du rendu, jamais dans une constante de module. Les nouvelles entrées du journal sont écrites dans la langue active (`src/domain/messages.ts`). Code, noms et messages de commit en anglais. Les échanges avec l'utilisateur restent en **français**.
 
-**Formats** : dates JJ/MM/AAAA ; montants en euros au format anglais (`€12.50`) ; « Sécurité sociale » et « Mutuelle » gardent leur nom français ; export CSV avec séparateur `;`.
+**Formats** : dates JJ/MM/AAAA ; montants `€12.50` en anglais, `12,50 €` en français ; « Sécurité sociale » et « Mutuelle » gardent leur nom français ; export CSV avec séparateur `;`.
 
 ## Point de départ
 `prototype/index.html` est un prototype fonctionnel en un seul fichier (HTML, CSS, JS sans dépendance). Il sert de référence pour le comportement et le design. Reprendre ses règles métier telles quelles, puis structurer le code proprement.

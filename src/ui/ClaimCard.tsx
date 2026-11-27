@@ -6,7 +6,6 @@ import { lastCancelReason } from "../domain/actions";
 import type { ClaimActions } from "./claimActions";
 import { strings } from "./strings";
 
-const S = strings;
 
 function Btn({ label, onClick, danger }: { label: string; onClick: () => void; danger?: boolean }) {
   return (
@@ -23,41 +22,41 @@ function itemTexts(c: Claim, i: Item, today: Ymd): { num: string; when: string; 
   let when: string;
   let tone: "" | "late" | "gap" = "";
   if (s === "received") {
-    num = S.item.received(i.received!);
-    when = S.item.receivedOn(i.receivedDate);
+    num = strings.item.received(i.received!);
+    when = strings.item.receivedOn(i.receivedDate);
   } else if (s === "gap") {
-    num = S.item.gap(i.received!, i.expected, gap(i));
-    when = S.item.lastPayment(i.receivedDate);
+    num = strings.item.gap(i.received!, i.expected, gap(i));
+    when = strings.item.lastPayment(i.receivedDate);
     tone = "gap";
   } else if (s === "written_off") {
-    num = S.item.writtenOff(i.received!, i.expected, gap(i));
-    when = S.item.writtenOffWhen;
+    num = strings.item.writtenOff(i.received!, i.expected, gap(i));
+    when = strings.item.writtenOffWhen;
   } else if (s === "refused") {
-    num = S.item.refused(i.expected);
-    when = S.item.refusedReason(i.refusedReason);
+    num = strings.item.refused(i.expected);
+    when = strings.item.refusedReason(i.refusedReason);
   } else {
-    num = S.item.expected(i.expected);
-    if (isShop(c) && !c.returnedDate) when = S.item.afterReturn;
+    num = strings.item.expected(i.expected);
+    if (isShop(c) && !c.returnedDate) when = strings.item.afterReturn;
     else if (i.due) {
       const d = daysBetween(today, i.due);
       if (d < 0) {
-        when = S.item.late(-d, i.due);
+        when = strings.item.late(-d, i.due);
         tone = "late";
-      } else when = d === 0 ? S.item.dueToday : S.item.due(i.due, d);
-    } else when = S.item.noDue;
+      } else when = d === 0 ? strings.item.dueToday : strings.item.due(i.due, d);
+    } else when = strings.item.noDue;
   }
-  if ((s === "pending" || s === "late" || s === "gap") && i.lastChase) when += S.item.chased(i.lastChase);
+  if ((s === "pending" || s === "late" || s === "gap") && i.lastChase) when += strings.item.chased(i.lastChase);
   return { num, when, tone };
 }
 
 function ItemRow({ c, i, today, actions }: { c: Claim; i: Item; today: Ymd; actions: ClaimActions }) {
   const t = itemTexts(c, i, today);
   const s = itemState(c, i, today);
-  const a = S.actions;
+  const a = strings.actions;
   const held = isShop(c) && !c.returnedDate && (s === "pending" || s === "late");
   return (
     <li class="item">
-      <span class="who">{S.sources[i.source]}</span>
+      <span class="who">{strings.sources[i.source]}</span>
       <span class="num">{t.num}</span>
       <span class={`when ${t.tone}`}>{t.when}</span>
       <span class="acts">
@@ -96,17 +95,17 @@ function ShopSteps({ c, today, actions }: { c: Claim; today: Ymd; actions: Claim
   return (
     <ol class="steps">
       <li class={`step ${step1}`}>
-        <b>{S.shop.step1}</b>
-        <span>{c.returnedDate ? S.shop.done : c.returnBy ? S.shop.returnBefore(c.returnBy, S.inDays(d!)) : S.shop.noDeadline}</span>
-        {!c.returnedDate && !c.cancelled && <Btn label={S.actions.markReturned} onClick={() => actions.markReturned(c)} />}
+        <b>{strings.shop.step1}</b>
+        <span>{c.returnedDate ? strings.shop.done : c.returnBy ? strings.shop.returnBefore(c.returnBy, strings.inDays(d!)) : strings.shop.noDeadline}</span>
+        {!c.returnedDate && !c.cancelled && <Btn label={strings.actions.markReturned} onClick={() => actions.markReturned(c)} />}
       </li>
       <li class={`step ${c.returnedDate ? "done" : ""}`}>
-        <b>{S.shop.step2}</b>
-        <span>{c.returnedDate ? S.shop.returnedOn(c.returnedDate, c.tracking) : S.shop.toDo}</span>
+        <b>{strings.shop.step2}</b>
+        <span>{c.returnedDate ? strings.shop.returnedOn(c.returnedDate, c.tracking) : strings.shop.toDo}</span>
       </li>
       <li class={`step ${step3}`}>
-        <b>{S.shop.step3(S.refundModes[c.refundMode])}</b>
-        <span>{closedAll ? S.shop.done : c.returnedDate ? S.shop.left(claimRemaining(c, today)) : S.shop.afterReturn}</span>
+        <b>{strings.shop.step3(strings.refundModes[c.refundMode])}</b>
+        <span>{closedAll ? strings.shop.done : c.returnedDate ? strings.shop.left(claimRemaining(c, today)) : strings.shop.afterReturn}</span>
       </li>
     </ol>
   );
@@ -116,14 +115,14 @@ function RequestLine({ c, today, actions }: { c: Claim; today: Ymd; actions: Cla
   const d = c.claimBy ? daysBetween(today, c.claimBy) : null;
   const tone = c.sentDate ? "done" : d !== null && d < 0 ? "bad" : "";
   const text = c.sentDate
-    ? S.request.sent(c.sentDate)
+    ? strings.request.sent(c.sentDate)
     : c.claimBy
-      ? S.request.toSendBefore(c.claimBy, S.inDays(d!))
-      : S.request.toSendNoDeadline;
+      ? strings.request.toSendBefore(c.claimBy, strings.inDays(d!))
+      : strings.request.toSendNoDeadline;
   return (
     <div class={`reqline ${tone}`}>
       <span>{text}</span>
-      {!c.sentDate && !c.cancelled && <Btn label={S.actions.markSent} onClick={() => actions.markSent(c)} />}
+      {!c.sentDate && !c.cancelled && <Btn label={strings.actions.markSent} onClick={() => actions.markSent(c)} />}
     </div>
   );
 }
@@ -132,7 +131,7 @@ function History({ c }: { c: Claim }) {
   const rows = [...c.log].sort((a, b) => b.t - a.t);
   return (
     <details class="log">
-      <summary>{S.card.history(c.log.length)}</summary>
+      <summary>{strings.card.history(c.log.length)}</summary>
       {rows.length ? (
         <ul class="logrows">
           {rows.map((l, k) => (
@@ -143,7 +142,7 @@ function History({ c }: { c: Claim }) {
           ))}
         </ul>
       ) : (
-        <p class="meta">{S.card.noHistory}</p>
+        <p class="meta">{strings.card.noHistory}</p>
       )}
     </details>
   );
@@ -153,44 +152,44 @@ export function ClaimCard({ c, today, actions }: { c: Claim; today: Ymd; actions
   const st = claimStatus(c, today);
   const remaining = claimRemaining(c, today);
   const reason = c.cancelled ? lastCancelReason(c) : "";
-  const a = S.actions;
+  const a = strings.actions;
   const titleId = `claim-${c.id}`;
   return (
     <article class={`card s-${st}${c.archived ? " archived" : ""}`} aria-labelledby={titleId}>
       <div class="card-top">
         <div>
           <h3 class="title" id={titleId}>{c.label}</h3>
-          <div class="meta">{S.card.meta(S.categories[c.category], c.date, c.ref)}</div>
+          <div class="meta">{strings.card.meta(strings.categories[c.category], c.date, c.ref)}</div>
           <div class="pills">
-            <span class={`pill p-${st}`}>{S.status[st]}</span>
-            {c.archived && <span class="pill p-archived">{S.archivedPill}</span>}
+            <span class={`pill p-${st}`}>{strings.status[st]}</span>
+            {c.archived && <span class="pill p-archived">{strings.archivedPill}</span>}
           </div>
         </div>
         <div class="money">
-          <div class="meta">{S.card.paid(c.amount)}</div>
+          <div class="meta">{strings.card.paid(c.amount)}</div>
           {c.cancelled ? (
-            <b>{S.card.cancelled}</b>
+            <b>{strings.card.cancelled}</b>
           ) : (
             <>
               <b>{formatMoney(remaining > 0 ? remaining : claimReceived(c))}</b>
-              <div class="meta">{remaining > 0 ? S.card.stillToReceive : S.card.receivedTotal}</div>
+              <div class="meta">{remaining > 0 ? strings.card.stillToReceive : strings.card.receivedTotal}</div>
             </>
           )}
         </div>
       </div>
 
-      {reason && <p class="meta">{S.card.cancelReason(reason)}</p>}
+      {reason && <p class="meta">{strings.card.cancelReason(reason)}</p>}
       {isShop(c) ? <ShopSteps c={c} today={today} actions={actions} /> : c.needsRequest && <RequestLine c={c} today={today} actions={actions} />}
 
       {!c.cancelled &&
         (c.items.length ? (
-          <ul class="items" aria-label={S.card.refundLines}>
+          <ul class="items" aria-label={strings.card.refundLines}>
             {c.items.map((i) => <ItemRow key={i.id} c={c} i={i} today={today} actions={actions} />)}
           </ul>
         ) : (
-          <p class="meta">{S.card.noItems}</p>
+          <p class="meta">{strings.card.noItems}</p>
         ))}
-      {c.notes && <p class="meta">{S.card.note(c.notes)}</p>}
+      {c.notes && <p class="meta">{strings.card.note(c.notes)}</p>}
 
       <History c={c} />
 

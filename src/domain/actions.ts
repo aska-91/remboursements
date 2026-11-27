@@ -6,7 +6,7 @@ import type { Category, Claim, Cents, Doc, Item, RefundMode, Source, Timestamp, 
 import { CLAIM_DEADLINE_YEARS, DEFAULT_DELAY_DAYS, REFUND_DAYS_AFTER_RETURN, SHOP_CATEGORY } from "./types";
 import { addDays, addYears } from "./dates";
 import { gap, isClosed, itemReceived } from "./status";
-import { journal } from "./messages";
+import { CANCEL_PREFIXES, journal } from "./messages";
 
 export function newId(): string {
   return crypto.randomUUID();
@@ -215,13 +215,12 @@ export function addNote(c: Claim, date: Ymd, text: string, now: Timestamp): Clai
   return logged(c, journal.note(date, t), now);
 }
 
-/** Text of the most recent cancellation, to show on a cancelled card. */
+/** Text of the most recent cancellation (in any language), to show on a cancelled card. */
 export function lastCancelReason(c: Claim): string {
-  const prefix = journal.cancelled("");
   for (let k = c.log.length - 1; k >= 0; k--) {
     const text = c.log[k]!.text;
-    if (text.startsWith(prefix)) return text.slice(prefix.length);
-    if (text.startsWith("Dépense annulée : ")) return text.slice("Dépense annulée : ".length);
+    const prefix = CANCEL_PREFIXES.find((p) => text.startsWith(p));
+    if (prefix) return text.slice(prefix.length);
   }
   return "";
 }
