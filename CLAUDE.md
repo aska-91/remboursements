@@ -5,7 +5,11 @@ Application personnelle pour ne jamais perdre de vue une dépense dont on attend
 - **Santé** : consultation (généraliste, spécialiste), pharmacie, dentiste/optique, examens. Remboursement par la Sécurité sociale et/ou la mutuelle.
 - **Shopping** : article acheté puis retourné, remboursement par l'enseigne (carte, avoir ou bon d'achat).
 
-Usage pour une seule personne pour l'instant (pas de partage). Interface en français, euros, dates JJ/MM/AAAA. Utilisable surtout sur téléphone.
+Usage pour une seule personne pour l'instant (pas de partage). Doit fonctionner aussi bien sur Android que sur ordinateur (mise en page adaptative, tactile et clavier/souris).
+
+**Langues** : interface de l'application en **anglais** (tous les textes dans `src/ui/strings.ts`). Code, noms et messages de commit en anglais. Les échanges avec l'utilisateur restent en **français**.
+
+**Formats** : dates JJ/MM/AAAA ; montants en euros au format anglais (`€12.50`) ; « Sécurité sociale » et « Mutuelle » gardent leur nom français ; export CSV avec séparateur `;`.
 
 ## Point de départ
 `prototype/index.html` est un prototype fonctionnel en un seul fichier (HTML, CSS, JS sans dépendance). Il sert de référence pour le comportement et le design. Reprendre ses règles métier telles quelles, puis structurer le code proprement.
@@ -50,6 +54,16 @@ Usage pour une seule personne pour l'instant (pas de partage). Interface en fran
 - Pas de compte ni de service tiers au départ. Aucune donnée de santé envoyée à un serveur sans accord explicite.
 - Accessible (clavier, contrastes, thème clair et sombre), mobile d'abord.
 - Tests unitaires sur les règles métier (états, montants, fusion de données), dates calculées en fuseau Europe/Paris.
+
+## Pile et structure (validées)
+TypeScript strict, Vite, Preact, IndexedDB (`idb`), vite-plugin-pwa, Vitest, Playwright pour vérifier les rendus téléphone (390 px) et ordinateur (1280 px).
+- `src/domain/` : règles métier pures (aucune dépendance au DOM ni au stockage), couvertes par les tests dans `tests/`.
+- `src/storage/` : interface de stockage remplaçable + implémentation IndexedDB.
+- `src/export/` : CSV et JSON.
+- `src/ui/` : écrans Preact, `strings.ts`, styles.
+- Les tests tournent dans un fuseau éloigné de Paris (`TZ=Pacific/Auckland`) pour détecter toute dépendance au fuseau de la machine.
+
+Commandes : `npm run dev`, `npm test`, `npm run build`.
 
 ## Pour démarrer
 1. Lire `prototype/index.html` et résumer les règles métier en tests.
