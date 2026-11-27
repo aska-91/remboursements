@@ -1,4 +1,4 @@
-import { expect, start, test, ymd } from "./fixtures";
+import { expect, saved, start, test, ymd } from "./fixtures";
 
 const fmt = (s: string) => s.split("-").reverse().join("/");
 
@@ -40,6 +40,7 @@ test("partial receipt, gap accepted, archive, then delete with confirmation", as
   await archived.getByRole("button", { name: "Delete permanently" }).click();
   await page.getByRole("dialog").getByRole("button", { name: "Delete", exact: true }).click();
   await expect(page.locator(".card")).toHaveCount(0);
+  await saved(page);
   await page.reload();
   await page.getByRole("button", { name: /^All/ }).click();
   await expect(page.locator("article", { hasText: "Dr Martin" })).toHaveCount(0);
@@ -133,6 +134,7 @@ test("French: switch, remembered after reload, journal in French", async ({ page
   await page.getByRole("dialog").getByRole("button", { name: "Valider" }).click();
   await card.locator("summary").click();
   await expect(card.locator(".logrow").first()).toContainText("Reçu 9,00 € de Mutuelle");
+  await saved(page);
   await page.reload();
   await expect(page.locator("html")).toHaveAttribute("lang", "fr");
   await expect(page.locator("h1")).toHaveText("Mes remboursements");
@@ -141,9 +143,11 @@ test("French: switch, remembered after reload, journal in French", async ({ page
 test("works offline once loaded", async ({ page, context }) => {
   await start(page, { demo: true });
   await page.waitForFunction(() => navigator.serviceWorker.controller !== null || navigator.serviceWorker.ready.then(() => true));
+  await saved(page);
   await page.reload(); // now controlled by the service worker
   await page.locator(".card").first().waitFor();
   await context.setOffline(true);
+  await saved(page);
   await page.reload();
   await expect(page.locator(".card").first()).toBeVisible();
   await context.setOffline(false);
