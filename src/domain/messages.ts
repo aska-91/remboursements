@@ -21,7 +21,7 @@ const fd = formatDate;
 
 const en = {
   created: (amount: number) => `Expense created: ${m(amount)} advanced`,
-  edited: () => "Expense edited",
+  edited: (removed: string[]) => "Expense edited" + opt(removed.length, ` · line removed: ${removed.join(", ")}`),
   received: (amount: number, src: string, date: string, gap: number, writeOff: boolean) =>
     `Received ${m(amount)} from ${src} on ${fd(date)}` +
     opt(gap > 0, `: gap of ${m(gap)}${writeOff ? ", accepted as out-of-pocket" : " to chase"}`),
@@ -45,7 +45,7 @@ const en = {
 /** Same wording as the prototype where it existed. */
 const fr: typeof en = {
   created: (amount) => `Dépense créée : ${m(amount)} avancés`,
-  edited: () => "Dépense modifiée",
+  edited: (removed) => "Dépense modifiée" + opt(removed.length, ` · ligne retirée : ${removed.join(", ")}`),
   received: (amount, src, date, gap, writeOff) =>
     `Reçu ${m(amount)} de ${src} le ${fd(date)}` +
     opt(gap > 0, ` : écart de ${m(gap)}${writeOff ? ", classé en reste à charge" : " à relancer"}`),
@@ -71,7 +71,8 @@ const BY_LANG: Record<Lang, typeof en> = { en, fr };
 /** Journal texts in the current language; sources are given as codes. */
 export const journal = {
   created: (amount: number) => BY_LANG[getLang()].created(amount),
-  edited: () => BY_LANG[getLang()].edited(),
+  edited: (removed: { source: Source; expected: number }[] = []) =>
+    BY_LANG[getLang()].edited(removed.map((r) => `${sourceNames()[r.source]} ${m(r.expected)}`)),
   received: (amount: number, src: Source, date: string, gap: number, writeOff: boolean) =>
     BY_LANG[getLang()].received(amount, sourceNames()[src], date, gap, writeOff),
   receiptUndone: (src: Source) => BY_LANG[getLang()].receiptUndone(sourceNames()[src]),

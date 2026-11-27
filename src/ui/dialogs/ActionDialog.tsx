@@ -14,14 +14,22 @@ export interface ActionConfig {
   info?: string;
   date?: { label: string; value: string };
   text?: { label: string; required?: boolean };
-  date2?: { label: string; value: string };
+  /** `follows`: recompute this date from the first one until the user edits it. */
+  date2?: { label: string; value: string; follows?: (date: string) => string };
   okLabel: string;
   onOk: (v: ActionValues) => void;
 }
 
 export function ActionDialog({ cfg, onClose }: { cfg: ActionConfig; onClose: () => void }) {
   const [v, setV] = useState<ActionValues>({ date: cfg.date?.value ?? "", text: "", date2: cfg.date2?.value ?? "" });
-  const set = (k: keyof ActionValues) => (e: Event) => setV({ ...v, [k]: (e.target as HTMLInputElement).value });
+  const [date2Touched, setDate2Touched] = useState(false);
+  const set = (k: keyof ActionValues) => (e: Event) => {
+    const value = (e.target as HTMLInputElement).value;
+    const next = { ...v, [k]: value };
+    if (k === "date2") setDate2Touched(true);
+    if (k === "date" && value && !date2Touched && cfg.date2?.follows) next.date2 = cfg.date2.follows(value);
+    setV(next);
+  };
   // Focus the field the user has to fill, otherwise the OK button.
   const focusText = !!cfg.text?.required;
   return (

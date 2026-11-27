@@ -38,7 +38,7 @@ export function buildCsv(claims: Claim[], today: Ymd): string {
         ? [
             cell(S.sources[i.source]), num(i.expected), cell(formatDate(i.due)),
             i.received != null ? num(i.received) : "", i.received != null ? num(Math.max(0, gap(i))) : "",
-            cell(formatDate(i.receivedDate)), cell(S.csv.itemStatus[itemState(c, i, today)]), cell(i.refusedReason, true),
+            cell(formatDate(i.receivedDate)), cell(c.cancelled ? S.csv.cancelled : S.csv.itemStatus[itemState(c, i, today)]), cell(i.refusedReason, true),
           ]
         : ["", "", "", "", "", "", "", ""];
       lines.push([...head, ...mid, ...tail].join(SEP));

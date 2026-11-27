@@ -34,11 +34,17 @@ describe("reading data", () => {
     expect(readDoc(JSON.parse(JSON.stringify(doc)), "2026-01-01")).toEqual(doc);
   });
   it("repairs bad values and rejects files that are not backups", () => {
-    const d = readDoc({ version: 3, claims: [{ date: "31/12/2026", category: "nope", amount: "abc" }] }, "2026-01-01");
-    expect(d.claims[0]).toMatchObject({ date: "2026-01-01", category: "other", amount: 0, items: [], log: [] });
-    expect(d.claims[0]!.id).toBeTruthy();
+    const d = readDoc({ version: 3, claims: [{ id: "x", date: "31/12/2026", category: "nope", amount: "abc" }] }, "2026-01-01");
+    expect(d.claims[0]).toMatchObject({ id: "x", date: "2026-01-01", category: "other", amount: 0, items: [], log: [] });
     expect(() => readDoc({ hello: 1 }, "2026-01-01")).toThrow();
     expect(() => readDoc(null, "2026-01-01")).toThrow();
+  });
+});
+
+describe("junk entries", () => {
+  it("skips entries that are not expenses with an id, so importing twice never duplicates", () => {
+    const file = { version: 3, claims: [null, 5, "x", {}, { id: "  " }, { id: "ok", label: "Real" }] };
+    expect(readDoc(file, "2026-01-01").claims.map((c) => c.id)).toEqual(["ok"]);
   });
 });
 

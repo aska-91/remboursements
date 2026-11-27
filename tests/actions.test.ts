@@ -52,6 +52,17 @@ describe("create and edit", () => {
     const s = A.createClaim(input({ category: "item_return", returnedDate: "2026-06-10", items: A.defaultItems("item_return", TODAY, 3000) }), NOW);
     expect(s.items[0]!.due).toBe("2026-06-24");
   });
+  it("a line with a receipt or a refusal cannot be removed; removed lines are logged", () => {
+    const c = claim({ items: [item({ id: "paid", received: 500 }), item({ id: "ref", refused: true }), item({ id: "open", source: "mutuelle", expected: 900 })] });
+    const keep = (ids: string[]) => input({ items: c.items.filter((i) => ids.includes(i.id)).map((i) => ({ id: i.id, source: i.source, expected: i.expected, due: i.due })) });
+    expect(() => A.editClaim(c, keep(["ref", "open"]), later)).toThrow();
+    expect(() => A.editClaim(c, keep(["paid", "open"]), later)).toThrow();
+    const e = A.editClaim(c, keep(["paid", "ref"]), later);
+    expect(e.items.map((i) => i.id)).toEqual(["paid", "ref"]);
+    expect(e.log.at(-1)!.text).toBe("Expense edited · line removed: Mutuelle €9.00");
+    expect(A.isLocked(c.items[0]!)).toBe(true);
+    expect(A.isLocked(c.items[2]!)).toBe(false);
+  });
   it("editing keeps receipts and refusals of existing lines", () => {
     const c = claim({ items: [item({ id: "a", received: 400, receivedDate: "2026-06-05" })] });
     const e = A.editClaim(c, input({ items: [{ id: "a", source: "mutuelle", expected: 900, due: "2026-07-01" }] }), later);
@@ -109,6 +120,10 @@ describe("refund lines", () => {
     const c = A.refuseItem(base, "a", "Not covered", later);
     expect(claimStatus(c, TODAY)).toBe("refused");
     expect(claimStatus(A.undoRefusal(c, "a", later), TODAY)).toBe("pending");
+  });
+  it("a receipt must be more than 0", () => {
+    expect(() => A.recordReceipt(base, "a", 0, TODAY, false, later)).toThrow();
+    expect(() => A.recordReceipt(base, "a", -100, TODAY, false, later)).toThrow();
   });
   it("unknown line id throws", () => {
     expect(() => A.recordReceipt(base, "nope", 1, TODAY, false, later)).toThrow();

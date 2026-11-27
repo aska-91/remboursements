@@ -3,6 +3,7 @@ import { buildCsv } from "../export/csv";
 import { buildBackup, parseBackup } from "../export/json";
 import { importBackup } from "../domain/data";
 import type { AppData } from "./useAppData";
+import type { ConfirmConfig } from "./dialogs/ConfirmDialog";
 import { strings } from "./strings";
 
 
@@ -18,7 +19,13 @@ function download(name: string, text: string, type: string) {
   setTimeout(() => URL.revokeObjectURL(url), 10_000);
 }
 
-export function BackupMenu({ data, toast }: { data: AppData; toast: (msg: string) => void }) {
+interface Props {
+  data: AppData;
+  toast: (msg: string) => void;
+  confirm: (cfg: ConfirmConfig) => void;
+}
+
+export function BackupMenu({ data, toast, confirm }: Props) {
   const menu = useRef<HTMLDetailsElement>(null);
   const file = useRef<HTMLInputElement>(null);
   const close = () => { if (menu.current) menu.current.open = false; };
@@ -49,13 +56,21 @@ export function BackupMenu({ data, toast }: { data: AppData; toast: (msg: string
     if (!f) return;
     try {
       const incoming = parseBackup(await f.text(), data.today);
-      let result = { added: 0, updated: 0, removed: 0 };
-      data.updateDoc((current) => {
-        const r = importBackup(current, incoming);
-        result = r;
-        return r.doc;
+      // Ask first, as the prototype did: the merge loses nothing but changes the data.
+      confirm({
+        title: strings.backup.confirmTitle,
+        message: strings.backup.confirmMessage(incoming.claims.length),
+        okLabel: strings.backup.confirmOk,
+        onOk: () => {
+          let result = { added: 0, updated: 0, removed: 0 };
+          data.updateDoc((current) => {
+            const r = importBackup(current, incoming);
+            result = r;
+            return r.doc;
+          });
+          toast(strings.backup.imported(result.added, result.updated, result.removed));
+        },
       });
-      toast(strings.backup.imported(result.added, result.updated, result.removed));
     } catch {
       toast(strings.backup.invalidFile);
     } finally {

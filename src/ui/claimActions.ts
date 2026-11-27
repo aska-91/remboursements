@@ -81,7 +81,8 @@ export function makeClaimActions(
           info: c.label,
           date: { label: d.returnedDate, value: data.today },
           text: { label: d.returnedTracking },
-          date2: { label: d.returnedRefundDue, value: A.defaultRefundDue(data.today) },
+          // Refund expected 14 days after the return date, recomputed if that date changes.
+          date2: { label: d.returnedRefundDue, value: A.defaultRefundDue(data.today), follows: A.defaultRefundDue },
           okLabel: d.returnedOk,
           onOk: (v) => upd(c.id, (x, now) => A.markReturned(x, v.date, v.text, v.date2, now)),
         },

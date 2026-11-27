@@ -95,6 +95,7 @@ export const fr: Strings = {
     dueToday: "Prévu aujourd'hui",
     due: (due, d) => `Prévu le ${fd(due)} (dans ${jours(d)})`,
     noDue: "Pas de date prévue",
+    noAmount: "Montant non renseigné",
     chased: (date) => ` · relancé le ${fd(date)}`,
   },
   shop: {
@@ -228,6 +229,9 @@ export const fr: Strings = {
     jsonFile: (date) => `sauvegarde-remboursements-${date}.json`,
     exported: "Fichier enregistré",
     invalidFile: "Ce fichier n'est pas une sauvegarde valide",
+    confirmTitle: "Importer une sauvegarde",
+    confirmMessage: (n) => `Fusionner les ${plural(n, "dépense", "dépenses")} de ce fichier avec vos données ? Rien n'est perdu : pour chaque dépense, la version la plus récente est gardée.`,
+    confirmOk: "Importer",
     imported: (added, updated, removed) =>
       added + updated + removed === 0
         ? "Sauvegarde importée : rien de nouveau"
@@ -245,6 +249,7 @@ export const fr: Strings = {
     ],
     yes: "oui",
     no: "non",
+    cancelled: "Annulée",
     itemStatus: {
       received: "Reçu", gap: "Écart", written_off: "Reste à charge", refused: "Refusé", pending: "En attente", late: "En retard",
     },
@@ -276,6 +281,7 @@ export const fr: Strings = {
     due: "Date prévue",
     removeLine: "Retirer",
     lineLabel: (n) => `Ligne de remboursement ${n}`,
+    lockedLine: "Déjà reçue ou refusée : cette ligne reste dans l'historique et ne peut pas être retirée.",
     refundsHint: "Acte médical : une ligne Sécurité sociale et, si besoin, une ligne Mutuelle (souvent la Sécu la transmet seule). La date prévue sert à repérer les retards.",
     notes: "Notes",
     save: "Enregistrer",

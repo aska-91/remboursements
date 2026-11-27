@@ -49,7 +49,7 @@ function Main({ opened }: { opened: OpenedStorage }) {
                 {LANGS.map((l) => <option key={l} value={l} lang={l}>{l === "en" ? "English" : "Français"}</option>)}
               </select>
             </label>
-            <BackupMenu data={data} toast={toast} />
+            <BackupMenu data={data} toast={toast} confirm={(cfg) => setDialog({ kind: "confirm", cfg })} />
             <button type="button" class="btn primary" onClick={() => setDialog({ kind: "form" })}>{strings.newExpense}</button>
           </div>
         </header>

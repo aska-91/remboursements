@@ -1,7 +1,7 @@
 import { useState } from "preact/hooks";
 import type { Category, Claim, RefundMode, Source, Ymd } from "../../domain/types";
 import { CATEGORIES, DEFAULT_DELAY_DAYS, REFUND_MODES, SHOP_CATEGORY, SOURCES } from "../../domain/types";
-import { blankItem, defaultClaimBy, defaultDue, defaultItems, newId, type ClaimInput } from "../../domain/actions";
+import { blankItem, defaultClaimBy, defaultDue, defaultItems, isLocked, newId, type ClaimInput } from "../../domain/actions";
 import { addDays } from "../../domain/dates";
 import { toCents, toEuros } from "../../domain/money";
 import { Dialog } from "../components/Dialog";
@@ -18,13 +18,15 @@ interface Row {
   dueTouched: boolean;
   /** Something was already received on this line (editing). */
   hasReceipt: boolean;
+  /** Received or refused: part of the history, cannot be removed. */
+  locked: boolean;
 }
 
 const eurosText = (cents: number) => (cents ? String(toEuros(cents)) : "");
 
 function rowsFor(category: Category, date: Ymd, amount: string): Row[] {
   return defaultItems(category, date, toCents(amount)).map((i) => ({
-    id: i.id, source: i.source, expected: eurosText(i.expected), due: i.due, dueTouched: false, hasReceipt: false,
+    id: i.id, source: i.source, expected: eurosText(i.expected), due: i.due, dueTouched: false, hasReceipt: false, locked: false,
   }));
 }
 
@@ -54,7 +56,7 @@ export function ClaimForm({ claim, today, onSave, onClose }: Props) {
   const [rows, setRows] = useState<Row[]>(() =>
     claim
       ? claim.items.map((i) => ({
-          id: i.id, source: i.source, expected: eurosText(i.expected), due: i.due, dueTouched: true, hasReceipt: i.received != null,
+          id: i.id, source: i.source, expected: eurosText(i.expected), due: i.due, dueTouched: true, hasReceipt: i.received != null, locked: isLocked(i),
         }))
       : rowsFor(CATEGORIES[0], today, ""),
   );
@@ -83,7 +85,7 @@ export function ClaimForm({ claim, today, onSave, onClose }: Props) {
   };
   const addRow = () => {
     const i = blankItem("mutuelle", defaultDue("mutuelle", date || today, category));
-    setRows([...rows, { id: newId(), source: i.source, expected: "", due: i.due, dueTouched: false, hasReceipt: false }]);
+    setRows([...rows, { id: newId(), source: i.source, expected: "", due: i.due, dueTouched: false, hasReceipt: false, locked: false }]);
   };
 
   const submit = (e: Event) => {
@@ -173,9 +175,13 @@ export function ClaimForm({ claim, today, onSave, onClose }: Props) {
                 {strings.form.due}
                 <input type="date" value={r.due} onInput={val((v) => setRow(r.id, { due: v, dueTouched: true }))} />
               </label>
-              <button type="button" class="btn small rm" onClick={() => setRows(rows.filter((x) => x.id !== r.id))}>
-                {strings.form.removeLine}
-              </button>
+              {r.locked ? (
+                <p class="hint rm" id={`locked-${r.id}`}>{strings.form.lockedLine}</p>
+              ) : (
+                <button type="button" class="btn small rm" onClick={() => setRows(rows.filter((x) => x.id !== r.id))}>
+                  {strings.form.removeLine}
+                </button>
+              )}
             </div>
           ))}
           <p class="hint">{strings.form.refundsHint}</p>

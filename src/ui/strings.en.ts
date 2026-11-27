@@ -99,6 +99,7 @@ export const en = {
     dueToday: "Due today",
     due: (due: string, d: number) => `Due ${formatDate(due)} (in ${days(d)})`,
     noDue: "No expected date",
+    noAmount: "Amount not set",
     chased: (date: string) => ` · chased on ${formatDate(date)}`,
   },
   shop: {
@@ -235,6 +236,9 @@ export const en = {
     jsonFile: (date: string) => `refund-tracker-backup-${date}.json`,
     exported: "File saved",
     invalidFile: "This file is not a valid backup",
+    confirmTitle: "Import a backup",
+    confirmMessage: (n: number) => `Merge the ${plural(n, "expense")} from this file with your data? Nothing is lost: for each expense, the most recent version is kept.`,
+    confirmOk: "Import",
     imported: (added: number, updated: number, removed: number) =>
       added + updated + removed === 0
         ? "Backup imported: nothing new"
@@ -252,6 +256,7 @@ export const en = {
     ],
     yes: "yes",
     no: "no",
+    cancelled: "Cancelled",
     itemStatus: {
       received: "Received", gap: "Gap", written_off: "Out-of-pocket", refused: "Refused", pending: "Pending", late: "Late",
     } satisfies Record<ItemState, string>,
@@ -284,6 +289,7 @@ export const en = {
     due: "Expected date",
     removeLine: "Remove",
     lineLabel: (n: number) => `Refund line ${n}`,
+    lockedLine: "Already received or refused: this line stays in the history and cannot be removed.",
     refundsHint: "Medical care: one Sécurité sociale line and, if needed, a Mutuelle line (the Sécurité sociale often forwards it). The expected date is used to spot delays.",
     notes: "Notes",
     save: "Save",

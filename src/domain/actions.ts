@@ -117,9 +117,17 @@ export function createClaim(input: ClaimInput, now: Timestamp): Claim {
   return logged(c, journal.created(c.amount), now);
 }
 
+/** A line that received money or was refused is part of the history: it cannot be removed. */
+export function isLocked(i: Item): boolean {
+  return i.received != null || i.refused;
+}
+
 export function editClaim(c: Claim, input: ClaimInput, now: Timestamp): Claim {
   if (!input.label.trim()) throw new Error("Label is required");
-  return logged(applyInput(c, input), journal.edited(), now);
+  const kept = new Set(input.items.map((i) => i.id));
+  const removed = c.items.filter((i) => !kept.has(i.id));
+  if (removed.some(isLocked)) throw new Error("A line with a receipt or a refusal cannot be removed");
+  return logged(applyInput(c, input), journal.edited(removed.map((i) => ({ source: i.source, expected: i.expected }))), now);
 }
 
 // ---------- refund lines ----------
@@ -139,6 +147,7 @@ export function gapAfterReceipt(i: Item, amount: Cents): Cents {
  * `writeOffGap` decides between "accepted as out-of-pocket" and "gap to chase".
  */
 export function recordReceipt(c: Claim, itemId: string, amount: Cents, date: Ymd, writeOffGap: boolean, now: Timestamp): Claim {
+  if (!(amount > 0)) throw new Error("The amount received must be more than 0");
   const i = findItem(c, itemId);
   const received = itemReceived(i) + amount;
   const g = i.expected - received;

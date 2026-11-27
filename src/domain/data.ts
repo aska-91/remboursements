@@ -91,7 +91,10 @@ export function readDoc(raw: unknown, fallbackDate: string): Doc {
   const legacy = r.version !== 3;
   const deleted: Record<string, number> = {};
   for (const [k, v] of Object.entries(obj(r.deleted))) if (num(v) > 0) deleted[k] = num(v);
-  return { version: 3, claims: r.claims.map((c) => normalizeClaim(c, legacy, fallbackDate)), deleted };
+  // Entries that are not expenses with an id are skipped: without an id they could not be
+  // matched on a later import and would come back as duplicates.
+  const valid = r.claims.filter((c) => c && typeof c === "object" && str((c as Raw).id).trim());
+  return { version: 3, claims: valid.map((c) => normalizeClaim(c, legacy, fallbackDate)), deleted };
 }
 
 export function emptyDoc(): Doc {

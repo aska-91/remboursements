@@ -63,7 +63,7 @@ TypeScript strict, Vite, Preact, IndexedDB (`idb`), vite-plugin-pwa, Vitest, Pla
 - `src/ui/` : écrans Preact, `strings.ts`, styles.
 - Les tests tournent dans un fuseau éloigné de Paris (`TZ=Pacific/Auckland`) pour détecter toute dépendance au fuseau de la machine.
 
-Commandes : `npm run dev`, `npm test`, `npm run build`.
+Commandes : `npm run dev`, `npm test` (règles métier, Vitest), `npm run test:e2e` (navigateur, Playwright : téléphone 390 px et ordinateur 1280 px, sur le build de production), `npm run build`.
 
 ## Pour démarrer
 1. Lire `prototype/index.html` et résumer les règles métier en tests.

@@ -40,7 +40,7 @@ export function ReceiptDialog({ claim, item, today, onOk, onClose }: Props) {
         <div class="grid2">
           <label class="f">
             {d.amountReceived}
-            <input type="number" step="0.01" min="0" required inputMode="decimal" data-autofocus value={amount}
+            <input type="number" step="0.01" min="0.01" required inputMode="decimal" data-autofocus value={amount}
               onFocus={(e) => (e.target as HTMLInputElement).select()}
               onInput={(e) => setAmount((e.target as HTMLInputElement).value)} />
           </label>

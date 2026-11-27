@@ -35,7 +35,7 @@ function itemTexts(c: Claim, i: Item, today: Ymd): { num: string; when: string; 
     num = strings.item.refused(i.expected);
     when = strings.item.refusedReason(i.refusedReason);
   } else {
-    num = strings.item.expected(i.expected);
+    num = i.expected ? strings.item.expected(i.expected) : strings.item.noAmount;
     if (isShop(c) && !c.returnedDate) when = strings.item.afterReturn;
     else if (i.due) {
       const d = daysBetween(today, i.due);
