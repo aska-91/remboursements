@@ -64,3 +64,20 @@ export function isValidYmd(s: unknown): s is Ymd {
   const [y, m, d] = parts(s);
   return fromUtc(Date.UTC(y, m - 1, d)) === s;
 }
+
+/** First day of the month of `s`. */
+export function startOfMonth(s: Ymd): Ymd {
+  return `${s.slice(0, 7)}-01`;
+}
+
+/** Last day of the month of `s` (handles leap years). */
+export function endOfMonth(s: Ymd): Ymd {
+  const [y, m] = parts(s);
+  return fromUtc(Date.UTC(y, m, 0));
+}
+
+/** Month of `s` shifted by `n` months, as the first day of that month. */
+export function addMonths(s: Ymd, n: number): Ymd {
+  const [y, m] = parts(s);
+  return fromUtc(Date.UTC(y, m - 1 + n, 1));
+}

@@ -4,6 +4,7 @@ import { daysBetween, formatDateTime } from "../domain/dates";
 import { formatMoney } from "../domain/money";
 import { lastCancelReason } from "../domain/actions";
 import type { ClaimActions } from "./claimActions";
+import { kindLabel } from "./labels";
 import { strings } from "./strings";
 
 
@@ -159,7 +160,7 @@ export function ClaimCard({ c, today, actions }: { c: Claim; today: Ymd; actions
       <div class="card-top">
         <div>
           <h3 class="title" id={titleId}>{c.label}</h3>
-          <div class="meta">{strings.card.meta(strings.categories[c.category], c.date, c.ref)}</div>
+          <div class="meta">{strings.card.meta(kindLabel(c), c.date, c.ref)}</div>
           <div class="pills">
             <span class={`pill p-${st}`}>{strings.status[st]}</span>
             {c.archived && <span class="pill p-archived">{strings.archivedPill}</span>}

@@ -26,7 +26,7 @@ export function matchesFilter(c: Claim, f: ListFilter, today: Ymd): boolean {
 export function matchesSearch(c: Claim, query: string, categoryLabel = ""): boolean {
   const q = query.trim().toLowerCase();
   if (!q) return true;
-  const hay = [c.label, c.notes, c.ref, categoryLabel, c.tracking, ...c.log.map((l) => l.text)].join(" ").toLowerCase();
+  const hay = [c.label, c.notes, c.ref, categoryLabel, c.store, c.subcategory, c.tracking, ...c.log.map((l) => l.text)].join(" ").toLowerCase();
   return hay.includes(q);
 }
 

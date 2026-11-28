@@ -4,6 +4,7 @@ import { openStorage, type OpenedStorage } from "../storage/startup";
 import { makeClaimActions, type DialogSpec } from "./claimActions";
 import { BackupMenu } from "./BackupMenu";
 import { ClaimList } from "./ClaimList";
+import { HistoryView } from "./HistoryView";
 import { Sources, Tiles, ToDo, YearTotals } from "./Overview";
 import { ActionDialog } from "./dialogs/ActionDialog";
 import { ClaimForm } from "./dialogs/ClaimForm";
@@ -31,6 +32,7 @@ function Main({ opened }: { opened: OpenedStorage }) {
     setLangState(l);
   };
   const [dialog, setDialog] = useState<DialogSpec | null>(null);
+  const [view, setView] = useState<"tracking" | "history">("tracking");
   const [toastMsg, toast] = useToast();
   const autosave = useAutoSave(data, opened.mirror, toast);
   const actions = useMemo(() => makeClaimActions(data, setDialog, toast), [data]);
@@ -39,7 +41,7 @@ function Main({ opened }: { opened: OpenedStorage }) {
   return (
     <>
       <div class="wrap">
-        <header class="app-header">
+        <header class="app-header no-print">
           <div>
             <h1>{strings.appName}</h1>
             <p class="sub">{strings.tagline}</p>
@@ -55,6 +57,13 @@ function Main({ opened }: { opened: OpenedStorage }) {
             <button type="button" class="btn primary" onClick={() => setDialog({ kind: "form" })}>{strings.newExpense}</button>
           </div>
         </header>
+        <nav class="views no-print" aria-label={strings.views.label}>
+          {(["tracking", "history"] as const).map((v) => (
+            <button key={v} type="button" class="view-tab" aria-current={view === v ? "page" : undefined} onClick={() => setView(v)}>
+              {strings.views[v]}
+            </button>
+          ))}
+        </nav>
         {!data.persistent && <p class="banner bad" role="alert">{strings.storageNotPersistent}</p>}
         {data.saveError && <p class="banner bad" role="alert">{strings.saveFailed}</p>}
         {autosave.status.state === "paused" && (
@@ -71,17 +80,23 @@ function Main({ opened }: { opened: OpenedStorage }) {
         )}
         {data.migrated > 0 && <p class="banner" role="status">{strings.migrated(data.migrated)}</p>}
         {/* Phone: overview above the list. Desktop: overview in a side column. */}
-        <div class="layout">
-          <aside class="side">
-            <Tiles claims={data.doc.claims} today={data.today} />
-            <ToDo claims={data.doc.claims} today={data.today} actions={actions} />
-            <Sources claims={data.doc.claims} today={data.today} />
-            <YearTotals claims={data.doc.claims} today={data.today} />
-          </aside>
+        {view === "history" ? (
           <main class="main">
-            <ClaimList lang={lang} claims={data.doc.claims} today={data.today} actions={actions} onAdd={() => setDialog({ kind: "form" })} />
+            <HistoryView lang={lang} claims={data.doc.claims} today={data.today} toast={toast} />
           </main>
-        </div>
+        ) : (
+          <div class="layout">
+            <aside class="side no-print">
+              <Tiles claims={data.doc.claims} today={data.today} />
+              <ToDo claims={data.doc.claims} today={data.today} actions={actions} />
+              <Sources claims={data.doc.claims} today={data.today} />
+              <YearTotals claims={data.doc.claims} today={data.today} />
+            </aside>
+            <main class="main">
+              <ClaimList lang={lang} claims={data.doc.claims} today={data.today} actions={actions} onAdd={() => setDialog({ kind: "form" })} />
+            </main>
+          </div>
+        )}
       </div>
 
       {dialog?.kind === "action" && <ActionDialog cfg={dialog.cfg} onClose={close} />}
@@ -102,7 +117,7 @@ function Main({ opened }: { opened: OpenedStorage }) {
         const editing = dialog.claimId ? data.doc.claims.find((x) => x.id === dialog.claimId) : undefined;
         if (dialog.claimId && !editing) return null;
         return (
-          <ClaimForm claim={editing} today={data.today} onClose={close}
+          <ClaimForm claim={editing} claims={data.doc.claims} today={data.today} onClose={close}
             onSave={(input) => {
               if (editing) {
                 data.updateClaim(editing.id, (x, now) => A.editClaim(x, input, now));

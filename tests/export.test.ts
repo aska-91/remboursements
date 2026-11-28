@@ -18,10 +18,10 @@ describe("CSV export", () => {
     expect(csv.startsWith("﻿")).toBe(true);
     const r = rows(csv);
     expect(r).toHaveLength(3);
-    expect(r[0]!.split(";")).toHaveLength(22);
+    expect(r[0]!.split(";")).toHaveLength(25);
     const line2 = r[2]!.split(";");
-    expect(line2.slice(0, 7)).toEqual(["01/06/2026", "Dr Martin", "General practitioner", "FS-1", "30,00", "Gap to chase", "no"]);
-    expect(line2.slice(7, 14)).toEqual(["Mutuelle", "9,50", "30/06/2026", "5,00", "4,50", "", "Gap"]);
+    expect(line2.slice(0, 10)).toEqual(["01/06/2026", "Dr Martin", "General practitioner", "Health", "", "", "FS-1", "30,00", "Gap to chase", "no"]);
+    expect(line2.slice(10, 17)).toEqual(["Mutuelle", "9,50", "30/06/2026", "5,00", "4,50", "", "Gap"]);
     expect(line2.at(-1)).toBe("15/06/2026 12:00 Expense created");
   });
   it("keeps an expense without lines", () => {

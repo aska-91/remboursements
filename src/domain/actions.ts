@@ -3,7 +3,7 @@
  * bumps `mod` and appends a journal entry. `now` is the action time.
  */
 import type { Category, Claim, Cents, Doc, Item, RefundMode, Source, Timestamp, Ymd } from "./types";
-import { CLAIM_DEADLINE_YEARS, DEFAULT_DELAY_DAYS, REFUND_DAYS_AFTER_RETURN, SHOP_CATEGORY } from "./types";
+import { CLAIM_DEADLINE_YEARS, DEFAULT_DELAY_DAYS, REFUND_DAYS_AFTER_RETURN, SHOP_CATEGORY, groupOf } from "./types";
 import { addDays, addYears } from "./dates";
 import { gap, isClosed, itemReceived } from "./status";
 import { CANCEL_PREFIXES, journal } from "./messages";
@@ -63,6 +63,8 @@ export interface ClaimInput {
   date: Ymd;
   label: string;
   category: Category;
+  store: string;
+  subcategory: string;
   amount: Cents;
   ref: string;
   notes: string;
@@ -92,6 +94,8 @@ function applyInput(base: Claim, input: ClaimInput): Claim {
     date: input.date,
     label: input.label.trim(),
     category: input.category,
+    store: shop ? input.store.trim() : "",
+    subcategory: groupOf(input.category) === "health" ? "" : input.subcategory.trim(),
     amount: input.amount,
     ref: input.ref.trim(),
     notes: input.notes.trim(),
@@ -106,10 +110,16 @@ function applyInput(base: Claim, input: ClaimInput): Claim {
   };
 }
 
-export function createClaim(input: ClaimInput, now: Timestamp): Claim {
+/** A shopping expense needs a store, otherwise the history by store would be incomplete. */
+function check(input: ClaimInput): void {
   if (!input.label.trim()) throw new Error("Label is required");
+  if (input.category === SHOP_CATEGORY && !input.store.trim()) throw new Error("Store is required");
+}
+
+export function createClaim(input: ClaimInput, now: Timestamp): Claim {
+  check(input);
   const empty: Claim = {
-    id: newId(), date: input.date, label: "", category: input.category, amount: 0, ref: "", notes: "",
+    id: newId(), date: input.date, label: "", category: input.category, store: "", subcategory: "", amount: 0, ref: "", notes: "",
     archived: false, cancelled: false, returnBy: "", returnedDate: "", tracking: "", refundMode: "original_payment",
     needsRequest: false, claimBy: "", sentDate: "", log: [], mod: now, items: [],
   };
@@ -123,7 +133,7 @@ export function isLocked(i: Item): boolean {
 }
 
 export function editClaim(c: Claim, input: ClaimInput, now: Timestamp): Claim {
-  if (!input.label.trim()) throw new Error("Label is required");
+  check(input);
   const kept = new Set(input.items.map((i) => i.id));
   const removed = c.items.filter((i) => !kept.has(i.id));
   if (removed.some(isLocked)) throw new Error("A line with a receipt or a refusal cannot be removed");

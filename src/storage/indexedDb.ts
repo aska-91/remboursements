@@ -1,6 +1,6 @@
 import { openDB, type DBSchema, type IDBPDatabase } from "idb";
 import type { Claim, Doc } from "../domain/types";
-import { mergeDocs } from "../domain/data";
+import { mergeDocs, upgradeClaim } from "../domain/data";
 import type { Storage } from "./Storage";
 
 const DB_VERSION = 1;
@@ -30,7 +30,8 @@ async function readAll(db: Db): Promise<Doc> {
     tx.objectStore("meta").get("deleted"),
     tx.done,
   ]);
-  return { version: 3, claims, deleted: (deleted as Doc["deleted"] | undefined) ?? {} };
+  // Records written by earlier versions may lack newer fields: complete them on the way in.
+  return { version: 3, claims: claims.map(upgradeClaim), deleted: (deleted as Doc["deleted"] | undefined) ?? {} };
 }
 
 export function indexedDbStorage(db: Db, channelName = `${db.name}-changes`): Storage {
@@ -43,14 +44,16 @@ export function indexedDbStorage(db: Db, channelName = `${db.name}-changes`): St
       const tx = db.transaction(["claims", "meta"], "readwrite");
       const claims = tx.objectStore("claims");
       const meta = tx.objectStore("meta");
+      const raw = await claims.getAll();
       const stored: Doc = {
         version: 3,
-        claims: await claims.getAll(),
+        claims: raw.map(upgradeClaim),
         deleted: ((await meta.get("deleted")) as Doc["deleted"] | undefined) ?? {},
       };
       const merged = mergeDocs(stored, doc);
       const keep = new Set(merged.claims.map((c) => c.id));
-      const byId = new Map(stored.claims.map((c) => [c.id, c]));
+      // Compared with what is really on disk, so records of an older shape get rewritten once.
+      const byId = new Map(raw.map((c) => [c.id, c]));
       const writes: Promise<unknown>[] = [];
       for (const c of stored.claims) if (!keep.has(c.id)) writes.push(claims.delete(c.id));
       for (const c of merged.claims) {
@@ -72,8 +75,17 @@ export function indexedDbStorage(db: Db, channelName = `${db.name}-changes`): St
   };
 }
 
+/** JSON with sorted keys, so two records with the same content compare equal whatever their key order. */
+function stableJson(v: unknown): string {
+  return JSON.stringify(v, (_k, x) =>
+    x && typeof x === "object" && !Array.isArray(x)
+      ? Object.fromEntries(Object.entries(x as Record<string, unknown>).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)))
+      : x,
+  );
+}
+
 function sameClaim(a: Claim, b: Claim): boolean {
-  return JSON.stringify(a) === JSON.stringify(b);
+  return stableJson(a) === stableJson(b);
 }
 
 export async function getMeta(db: Db, key: string): Promise<unknown> {

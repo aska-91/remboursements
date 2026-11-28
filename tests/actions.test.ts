@@ -8,7 +8,7 @@ const later = NOW + 60_000;
 
 function input(p: Partial<ClaimInput> = {}): ClaimInput {
   return {
-    date: TODAY, label: " Dr Martin ", category: "gp", amount: 3000, ref: "", notes: "", returnBy: "", returnedDate: "",
+    date: TODAY, label: " Dr Martin ", category: "gp", store: "", subcategory: "", amount: 3000, ref: "", notes: "", returnBy: "", returnedDate: "",
     tracking: "", refundMode: "original_payment", needsRequest: false, claimBy: "", sentDate: "",
     items: A.defaultItems("gp", TODAY, 3000), ...p,
   };
@@ -43,13 +43,13 @@ describe("create and edit", () => {
   it("drops fields that do not belong to the category", () => {
     const h = A.createClaim(input({ returnBy: "2026-07-01", tracking: "X", needsRequest: true, claimBy: "2028-06-15" }), NOW);
     expect([h.returnBy, h.tracking, h.claimBy]).toEqual(["", "", "2028-06-15"]);
-    const s = A.createClaim(input({ category: "item_return", needsRequest: true, claimBy: "2028-06-15", sentDate: "2026-06-01" }), NOW);
+    const s = A.createClaim(input({ category: "item_return", store: "Zara", needsRequest: true, claimBy: "2028-06-15", sentDate: "2026-06-01" }), NOW);
     expect([s.needsRequest, s.claimBy, s.sentDate]).toEqual([false, "", ""]);
     const h2 = A.createClaim(input({ needsRequest: false, claimBy: "2028-06-15" }), NOW);
     expect(h2.claimBy).toBe("");
   });
   it("a return entered as already shipped gets refund date = return + 14 days", () => {
-    const s = A.createClaim(input({ category: "item_return", returnedDate: "2026-06-10", items: A.defaultItems("item_return", TODAY, 3000) }), NOW);
+    const s = A.createClaim(input({ category: "item_return", store: "Zara", returnedDate: "2026-06-10", items: A.defaultItems("item_return", TODAY, 3000) }), NOW);
     expect(s.items[0]!.due).toBe("2026-06-24");
   });
   it("a line with a receipt or a refusal cannot be removed; removed lines are logged", () => {

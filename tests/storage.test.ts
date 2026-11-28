@@ -100,3 +100,37 @@ describe("taking over the prototype's data", () => {
     expect(await migratePrototype(db3, indexedDbStorage(db3), undefined)).toBe(0);
   });
 });
+
+describe("data written by an older version of the app", () => {
+  // Exactly what the live version stored before families / stores existed: no `store`, no `subcategory`.
+  const old = () => {
+    const { store: _s, subcategory: _c, ...rest } = claim({ id: "old1", label: "Old return", category: "item_return" });
+    return rest;
+  };
+
+  it("is completed with the new fields when loaded", async () => {
+    const db = await freshDb();
+    await db.put("claims", old() as never);
+    const doc = await indexedDbStorage(db).load();
+    expect(doc.claims).toHaveLength(1);
+    expect(doc.claims[0]).toMatchObject({ id: "old1", label: "Old return", store: "", subcategory: "" });
+  });
+
+  it("is completed when merged during a save, and the record is upgraded", async () => {
+    const db = await freshDb();
+    await db.put("claims", old() as never);
+    const s = indexedDbStorage(db);
+    const merged = await s.save({ version: 3, claims: [claim({ id: "new1" })], deleted: {} });
+    expect(merged.claims.map((c) => c.id).sort()).toEqual(["new1", "old1"]);
+    expect(merged.claims.every((c) => c.store === "" && c.subcategory === "")).toBe(true);
+    expect(((await db.get("claims", "old1")) as unknown as { store: string }).store).toBe("");
+  });
+
+  it("keeps everything else untouched", async () => {
+    const db = await freshDb();
+    const raw = old();
+    await db.put("claims", raw as never);
+    const [c] = (await indexedDbStorage(db).load()).claims;
+    expect({ ...c, store: undefined, subcategory: undefined }).toEqual({ ...raw, store: undefined, subcategory: undefined });
+  });
+});
