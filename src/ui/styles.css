@@ -271,6 +271,7 @@ tbody th { font-weight: 600; }
   .print-head p { margin: 2px 0 0; color: #444; }
   .history h2 { font-size: 16pt; }
   .tile, .panel, .tl-item { box-shadow: none; }
+  .tile .v { font-size: 16pt; white-space: nowrap; }
   .tile.main { background: #fff; color: #000; border: 2px solid var(--accent); }
   .tile.main .k, .tile.main .n { color: #444; opacity: 1; }
   .tl-item, .breakdown tr { break-inside: avoid; }

@@ -100,15 +100,23 @@ export function ClaimForm({ claim, claims, today, onSave, onClose }: Props) {
     setRows([...rows, { id: newId(), source: i.source, expected: "", due: i.due, dueTouched: false, hasReceipt: false, locked: false }]);
   };
 
+  const [error, setError] = useState("");
   const submit = (e: Event) => {
     e.preventDefault();
-    if (!label.trim()) return;
+    // Whitespace-only text passes the browser's "required" check: refuse it here, with a message.
+    if (!label.trim()) return setError(strings.form.labelRequired);
+    if (shop && !store.trim()) return setError(strings.form.storeRequired);
+    try {
+      onSave({
+        date, label, category, store, subcategory, amount: toCents(amount), ref, notes, returnBy, returnedDate, tracking, refundMode,
+        needsRequest, claimBy, sentDate,
+        items: rows.map((r) => ({ id: r.id, source: r.source, expected: toCents(r.expected), due: r.due })),
+      });
+    } catch {
+      // Nothing was saved: keep the form open so that the entry is not lost.
+      return setError(strings.form.saveFailed);
+    }
     onClose();
-    onSave({
-      date, label, category, store, subcategory, amount: toCents(amount), ref, notes, returnBy, returnedDate, tracking, refundMode,
-      needsRequest, claimBy, sentDate,
-      items: rows.map((r) => ({ id: r.id, source: r.source, expected: toCents(r.expected), due: r.due })),
-    });
   };
 
   return (
@@ -225,6 +233,7 @@ export function ClaimForm({ claim, claims, today, onSave, onClose }: Props) {
         </fieldset>
 
         <label class="f">{strings.form.notes}<textarea rows={2} maxLength={400} value={notes} onInput={val(setNotes)} /></label>
+        {error && <p class="hint warn" role="alert">{error}</p>}
         <div class="row end">
           <button type="button" class="btn" onClick={onClose}>{strings.dialog.cancel}</button>
           <button type="submit" class="btn primary">{strings.form.save}</button>

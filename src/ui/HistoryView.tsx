@@ -1,4 +1,5 @@
-import { useMemo, useState } from "preact/hooks";
+import { useMemo } from "preact/hooks";
+import { useSessionState } from "./useSessionState";
 import type { Category, Claim, Group, Ymd } from "../domain/types";
 import { GROUPS, HEALTH_CATEGORIES } from "../domain/types";
 import {
@@ -50,13 +51,25 @@ interface Props {
 
 export function HistoryView({ lang, claims, today, toast }: Props) {
   const H = strings.history;
-  const [group, setGroup] = useState<Group | "all">("all");
-  const [category, setCategory] = useState<Category | "all">("all");
-  const [store, setStore] = useState<string>("all");
-  const [subcategory, setSubcategory] = useState<string>("all");
-  const [preset, setPreset] = useState<Preset>("all");
-  const [custom, setCustom] = useState({ from: "", to: "" });
-  const [newestFirst, setNewestFirst] = useState(true);
+  const [group, setGroup] = useSessionState<Group | "all">("history.group", "all");
+  const [category, setCategory] = useSessionState<Category | "all">("history.category", "all");
+  const [wantedStore, setStore] = useSessionState<string>("history.store", "all");
+  const [wantedSub, setSubcategory] = useSessionState<string>("history.subcategory", "all");
+  const [preset, setPreset] = useSessionState<Preset>("history.preset", "all");
+  const [custom, setCustom] = useSessionState("history.custom", { from: "", to: "" });
+  const [newestFirst, setNewestFirst] = useSessionState("history.newestFirst", true);
+
+  const stores = useMemo(() => storeChoices(claims), [claims]);
+  // A store or sub-category chosen earlier may no longer exist (deleted, renamed, imported data): fall back to "all".
+  const store = wantedStore === "all" || stores.some((s) => s.key === wantedStore) ? wantedStore : "all";
+  const subs = useMemo(
+    () => subcategoryChoices(
+      group === "shopping" && store !== "all" ? claims.filter((c) => normKey(c.store) === store) : claims,
+      group === "other" ? ["other"] : ["shopping"],
+    ),
+    [claims, group, store],
+  );
+  const subcategory = wantedSub === "all" || subs.some((s) => s.key === wantedSub) ? wantedSub : "all";
 
   const range = preset === "custom" ? custom : periodRange(preset, today);
   const filter: ReportFilter = { ...ALL_FILTER, group, category, store, subcategory, ...range };
@@ -64,11 +77,6 @@ export function HistoryView({ lang, claims, today, toast }: Props) {
     () => buildReport(claims, filter, today, newestFirst),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [claims, group, category, store, subcategory, range.from, range.to, today, newestFirst],
-  );
-  const stores = useMemo(() => storeChoices(claims), [claims]);
-  const subs = useMemo(
-    () => subcategoryChoices(claims, group === "other" ? ["other"] : ["shopping"]),
-    [claims, group],
   );
   const withoutStore = useMemo(
     () => claims.filter((c) => c.category === "item_return" && !c.cancelled && !c.store.trim()).length,
@@ -92,7 +100,7 @@ export function HistoryView({ lang, claims, today, toast }: Props) {
   const periodText = H.periodText(range.from, range.to);
 
   const exportCsv = () => {
-    download(H.csvFile(slug(what), today), buildReportCsv(report, today), "text/csv;charset=utf-8");
+    download(H.csvFile(slug(what).slice(0, 40).replace(/-$/, ""), today), buildReportCsv(report, today), "text/csv;charset=utf-8");
     toast(strings.backup.exported);
   };
   const print = () => {
@@ -135,7 +143,7 @@ export function HistoryView({ lang, claims, today, toast }: Props) {
           {group === "shopping" && (
             <label class="f">
               {H.store}
-              <select value={store} onChange={(e) => setStore((e.target as HTMLSelectElement).value)}>
+              <select value={store} onChange={(e) => { setStore((e.target as HTMLSelectElement).value); setSubcategory("all"); }}>
                 <option value="all">{H.allStores}</option>
                 {stores.map((s) => <option key={s.key} value={s.key}>{s.label || strings.noStore}</option>)}
               </select>

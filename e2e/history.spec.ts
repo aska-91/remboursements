@@ -38,6 +38,23 @@ test.describe("classification when entering an expense", () => {
     await expect(page.locator("article", { hasText: "Sweater" }).locator(".meta").first()).toContainText("Zara · Clothes");
   });
 
+  test("a store made of spaces is refused with a message and the form stays open", async ({ page }) => {
+    await start(page);
+    await page.getByRole("button", { name: "Add my first expense" }).click();
+    const f = page.getByRole("dialog");
+    await f.getByLabel("Family").selectOption("shopping");
+    await f.getByLabel("Description (who, what)").fill("Sweater");
+    await f.getByLabel("Amount paid (€)").fill("45");
+    await f.getByRole("combobox", { name: "Store", exact: true }).fill("   ");
+    await f.getByRole("button", { name: "Save" }).click();
+    await expect(f).toBeVisible();
+    await expect(f.getByRole("alert")).toHaveText("Enter the store name.");
+    await f.getByRole("combobox", { name: "Store", exact: true }).fill("Zara");
+    await f.getByRole("button", { name: "Save" }).click();
+    await expect(f).toBeHidden();
+    await expect(page.locator("article", { hasText: "Sweater" })).toHaveCount(1);
+  });
+
   test("health shows the type of care and no store; other keeps its own sub-category", async ({ page }) => {
     await start(page);
     await page.getByRole("button", { name: "Add my first expense" }).click();
@@ -51,6 +68,50 @@ test.describe("classification when entering an expense", () => {
     // Back to health keeps the lines pre-filled for health.
     await f.getByLabel("Family").selectOption("health");
     await expect(f.locator(".exp-row select").first()).toHaveValue("social_security");
+  });
+});
+
+test.describe("upgrading from the previous version", () => {
+  // The previous version stored claims without `store` and `subcategory`, straight in IndexedDB.
+  test("expenses saved by the older version are shown, searchable, editable and counted in the history", async ({ page }) => {
+    await start(page); // creates the database
+    await page.evaluate(async () => {
+      const old = (id: string, label: string, category: string, amount: number, date: string) => ({
+        id, date, label, category, amount, ref: "", notes: "", archived: false, cancelled: false,
+        returnBy: "", returnedDate: category === "item_return" ? date : "", tracking: "", refundMode: "original_payment",
+        needsRequest: false, claimBy: "", sentDate: "", log: [{ t: 1, text: "Expense created" }], mod: 5,
+        items: [{ id: `${id}-i`, source: category === "item_return" ? "retailer" : "mutuelle", expected: amount, due: date, received: null, receivedDate: "", writeOff: false, refused: false, refusedReason: "", lastChase: "" }],
+      });
+      const db = await new Promise<IDBDatabase>((r) => { const q = indexedDB.open("refund-tracker"); q.onsuccess = () => r(q.result); });
+      await new Promise<void>((r) => {
+        const tx = db.transaction("claims", "readwrite");
+        tx.objectStore("claims").put(old("o1", "Old shoes", "item_return", 5000, "2026-02-01"));
+        tx.objectStore("claims").put(old("o2", "Old visit", "gp", 3000, "2026-02-02"));
+        tx.oncomplete = () => r();
+      });
+      db.close();
+    });
+    await page.reload();
+    await expect(page.locator(".card")).toHaveCount(2);
+    await expect(page.locator("article", { hasText: "Old shoes" }).locator(".meta").first()).toContainText("No store");
+    // The search and the history work on them.
+    await page.getByRole("searchbox", { name: "Search" }).fill("old shoes");
+    await expect(page.locator(".card")).toHaveCount(1);
+    await openHistory(page);
+    await panel(page).getByLabel("Family").selectOption("shopping");
+    await expect(page.locator(".tl-item .meta").first()).toContainText("No store");
+    await expect(page.locator(".hint.warn")).toContainText("1 shopping expense without a store");
+    // An old return cannot be saved until it gets a store, then it is saved with it.
+    await page.getByRole("button", { name: "Tracking" }).click();
+    await page.getByRole("button", { name: "All" }).click();
+    await page.locator("article", { hasText: "Old shoes" }).getByRole("button", { name: "Edit" }).click();
+    const f = page.getByRole("dialog");
+    await f.getByRole("combobox", { name: "Store", exact: true }).fill("Decathlon");
+    await f.getByRole("button", { name: "Save" }).click();
+    await expect(page.locator("article", { hasText: "Old shoes" }).locator(".meta").first()).toContainText("Decathlon");
+    await saved(page);
+    await page.reload();
+    await expect(page.locator("article", { hasText: "Old shoes" }).locator(".meta").first()).toContainText("Decathlon");
   });
 });
 
@@ -179,12 +240,51 @@ test.describe("history", () => {
     await expect(page.locator(".print-head")).toBeHidden();
   });
 
-  test("the choice of language and filters survives going back and forth between sections", async ({ page }) => {
+  test("each section keeps its filters when you switch to the other and back", async ({ page }) => {
+    await start(page, { data: historyData });
+    // Tracking: a status filter and a search.
+    await page.locator("button.chip", { hasText: "Done" }).click();
+    await page.getByRole("searchbox", { name: "Search" }).fill("tent");
+    // History: a store and a period.
+    await openHistory(page);
+    await panel(page).getByLabel("Family").selectOption("shopping");
+    await panel(page).getByLabel("Store").selectOption("zara");
+    await panel(page).getByLabel("Period").selectOption("last_year");
+    // Back to tracking, then to history again.
+    await page.getByRole("button", { name: "Tracking" }).click();
+    await expect(page.locator("button.chip", { hasText: "Done" })).toHaveAttribute("aria-pressed", "true");
+    await expect(page.getByRole("searchbox", { name: "Search" })).toHaveValue("tent");
+    await openHistory(page);
+    await expect(panel(page).getByLabel("Family")).toHaveValue("shopping");
+    await expect(panel(page).getByLabel("Store")).toHaveValue("zara");
+    await expect(panel(page).getByLabel("Period")).toHaveValue("last_year");
+  });
+
+  test("a store that no longer exists does not leave a blank filter", async ({ page }) => {
     await start(page, { data: historyData });
     await openHistory(page);
+    await panel(page).getByLabel("Family").selectOption("shopping");
+    await panel(page).getByLabel("Store").selectOption("zara");
+    await expect(page.locator(".tl-item")).toHaveCount(1);
+    // Cancel the only Zara expense: the store disappears from the list.
     await page.getByRole("button", { name: "Tracking" }).click();
-    await expect(page.locator(".list-section")).toBeVisible();
-    await saved(page);
+    await page.locator("button.chip", { hasText: "All" }).click();
+    await page.locator("article", { hasText: "Jacket" }).getByRole("button", { name: "Cancel expense" }).click();
+    await page.getByRole("dialog").getByLabel("Reason").fill("test");
+    await page.getByRole("dialog").getByRole("button", { name: "Cancel the expense" }).click();
+    await openHistory(page);
+    await expect(panel(page).getByLabel("Store")).toHaveValue("all");
+    await expect(page.locator(".tl-item")).not.toHaveCount(0);
+  });
+
+  test("the sub-category list follows the chosen store", async ({ page }) => {
+    await start(page, { data: historyData });
+    await openHistory(page);
+    await panel(page).getByLabel("Family").selectOption("shopping");
+    const subs = async () => (await panel(page).getByLabel("Sub-category").locator("option").allInnerTexts()).map((t) => t.trim());
+    expect(await subs()).toEqual(expect.arrayContaining(["Sport", "Clothes", "Electronics"]));
+    await panel(page).getByLabel("Store").selectOption("zara");
+    expect(await subs()).toEqual(["All sub-categories", "Clothes"]);
   });
 });
 

@@ -1,4 +1,5 @@
-import { useMemo, useState } from "preact/hooks";
+import { useMemo } from "preact/hooks";
+import { useSessionState } from "./useSessionState";
 import type { Category, Claim, Ymd } from "../domain/types";
 import { CATEGORIES } from "../domain/types";
 import { LIST_FILTERS, listClaims, matchesFilter, type ListFilter } from "../domain/list";
@@ -18,9 +19,9 @@ interface Props {
 }
 
 export function ClaimList({ lang, claims, today, actions, onAdd }: Props) {
-  const [filter, setFilter] = useState<ListFilter>("in_progress");
-  const [search, setSearch] = useState("");
-  const [category, setCategory] = useState<Category | "all">("all");
+  const [filter, setFilter] = useSessionState<ListFilter>("list.filter", "in_progress");
+  const [search, setSearch] = useSessionState("list.search", "");
+  const [category, setCategory] = useSessionState<Category | "all">("list.category", "all");
 
   const rows = useMemo(
     () => listClaims(claims, { filter, search, category, categoryLabel }, today),

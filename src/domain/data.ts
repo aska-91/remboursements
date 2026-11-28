@@ -4,7 +4,7 @@
  */
 import type { Category, Claim, Doc, Item, JournalEntry, RefundMode, Source } from "./types";
 import { CATEGORIES, REFUND_MODES, SOURCES } from "./types";
-import { isValidYmd } from "./dates";
+import { isValidYmd, today } from "./dates";
 import { toCents } from "./money";
 import { newId } from "./actions";
 
@@ -84,6 +84,15 @@ export function normalizeClaim(raw: unknown, legacy: boolean, fallbackDate: stri
     mod: num(r.mod),
     items: (Array.isArray(r.items) ? r.items : []).map((i) => normalizeItem(i, legacy)),
   };
+}
+
+/**
+ * Brings a record stored by any earlier version of the app up to the current shape
+ * (missing fields get their defaults). Applied to everything read from storage, so
+ * the rest of the app can rely on every field being there.
+ */
+export function upgradeClaim(raw: unknown): Claim {
+  return normalizeClaim(raw, false, today());
 }
 
 /** Accepts the current format (version 3) and the prototype's (v1/v2). Throws if it is not a backup. */
