@@ -5,20 +5,9 @@ import { importBackup } from "../domain/data";
 import type { AppData } from "./useAppData";
 import type { ConfirmConfig } from "./dialogs/ConfirmDialog";
 import type { AutoSave } from "./useAutoSave";
+import { download } from "./download";
 import { strings } from "./strings";
 
-
-/** Saves text as a file through the browser's download (works offline, nothing is sent anywhere). */
-function download(name: string, text: string, type: string) {
-  const url = URL.createObjectURL(new Blob([text], { type }));
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = name;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 10_000);
-}
 
 interface Props {
   data: AppData;

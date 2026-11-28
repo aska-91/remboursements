@@ -5,6 +5,8 @@ Application personnelle pour ne jamais perdre de vue une dépense dont on attend
 - **Santé** : consultation (généraliste, spécialiste), pharmacie, dentiste/optique, examens. Remboursement par la Sécurité sociale et/ou la mutuelle.
 - **Shopping** : article acheté puis retourné, remboursement par l'enseigne (carte, avoir ou bon d'achat).
 
+**Familles** : Santé (sous-catégories fixes : médecin généraliste, médecin spécialiste, pharmacie, dentiste / optique, examens / analyses), Achats (classés par **enseigne**, avec une sous-catégorie libre facultative), Autre (sous-catégorie libre facultative). Le choix se fait à la saisie d'une dépense.
+
 Usage pour une seule personne pour l'instant (pas de partage). Doit fonctionner aussi bien sur Android que sur ordinateur (mise en page adaptative, tactile et clavier/souris).
 
 **Langues** : interface **bilingue anglais / français**, au choix de l'utilisateur (sélecteur dans l'en-tête, choix mémorisé ; par défaut la langue de l'appareil). Tous les textes sont dans `src/ui/strings.en.ts` et `src/ui/strings.fr.ts` (mêmes clés, vérifiées par TypeScript) ; lire `strings.x` au moment du rendu, jamais dans une constante de module. Les nouvelles entrées du journal sont écrites dans la langue active (`src/domain/messages.ts`). Code, noms et messages de commit en anglais. Les échanges avec l'utilisateur restent en **français**.
@@ -15,7 +17,7 @@ Usage pour une seule personne pour l'instant (pas de partage). Doit fonctionner 
 `prototype/index.html` est un prototype fonctionnel en un seul fichier (HTML, CSS, JS sans dépendance). Il sert de référence pour le comportement et le design. Reprendre ses règles métier telles quelles, puis structurer le code proprement.
 
 ## Modèle de données
-**Dépense (claim)** : id, date, libellé, catégorie (Médecin généraliste, Médecin spécialiste, Pharmacie, Dentiste / Optique, Examens / Analyses, Retour d'article, Autre), montant avancé, référence, notes, archivée (bool), issue (vide ou « annulée »), mod (horodatage de dernière modification), journal.
+**Dépense (claim)** : id, date, libellé, catégorie (Médecin généraliste, Médecin spécialiste, Pharmacie, Dentiste / Optique, Examens / Analyses, Retour d'article = famille Achats, Autre ; la famille se déduit de la catégorie), enseigne (obligatoire pour les achats, regroupée sans tenir compte de la casse ni des accents), sous-catégorie libre (achats et autre), montant avancé, référence, notes, archivée (bool), issue (vide ou « annulée »), mod (horodatage de dernière modification), journal.
 - Champs shopping : date limite de retour, date de retour effectif, n° de suivi, mode de remboursement (moyen de paiement, avoir/bon d'achat, autre).
 - Champs santé : « demande à envoyer moi-même » (bool), date limite pour réclamer (proposée à date + 2 ans, à vérifier selon le contrat), date d'envoi.
 - Journal : liste d'événements {horodatage, texte}, jamais supprimés.
@@ -39,7 +41,8 @@ Usage pour une seule personne pour l'instant (pas de partage). Doit fonctionner 
 4. **Carte de dépense** : statut, montants, étapes shopping (à retourner, retourné, remboursement), ligne de demande santé, lignes de remboursement avec actions, historique repliable.
 5. **Formulaire** d'ajout et de modification, avec lignes pré-remplies (Sécurité sociale + Mutuelle, ou Enseigne pour un retour).
 6. **Bilan par année** : dépenses, avancé, reçu, à recevoir, reste à charge.
-7. **Sauvegarde** : export CSV (une ligne par remboursement, journal inclus), export JSON complet, import JSON par fusion sans perte (la version la plus récente gagne, suppressions suivies).
+7. **Historique** : par famille, type de soin, enseigne ou sous-catégorie, sur une période (ce mois-ci, mois dernier, cette année, année dernière, depuis toujours, dates libres, selon la date de la dépense). Totaux (avancé, remboursé, à recevoir, reste à charge), répartition (par famille, type de soin, enseigne ou sous-catégorie) et chronologie datée regroupée par mois. Les dépenses annulées ne sont pas comptées. Impression / PDF (feuille de style d'impression) et export CSV de ce qui est affiché.
+8. **Sauvegarde** : export CSV (une ligne par remboursement, journal inclus), export JSON complet, import JSON par fusion sans perte (la version la plus récente gagne, suppressions suivies).
 
 ## À ajouter ensuite (par ordre de priorité)
 1. Rappels (notification ou e-mail hebdomadaire) pour les éléments à traiter.
@@ -57,7 +60,7 @@ Usage pour une seule personne pour l'instant (pas de partage). Doit fonctionner 
 
 ## Pile et structure (validées)
 TypeScript strict, Vite, Preact, IndexedDB (`idb`), vite-plugin-pwa, Vitest, Playwright pour vérifier les rendus téléphone (390 px) et ordinateur (1280 px).
-- `src/domain/` : règles métier pures (aucune dépendance au DOM ni au stockage), couvertes par les tests dans `tests/`.
+- `src/domain/` : règles métier pures (aucune dépendance au DOM ni au stockage), couvertes par les tests dans `tests/`. `report.ts` : filtres, totaux, répartition et regroupement par mois de l'historique.
 - `src/storage/` : interface de stockage remplaçable + implémentation IndexedDB ; `fileMirror.ts` recopie automatiquement les données dans un fichier choisi par l'utilisateur (File System Access API, Chrome/Edge sur ordinateur), IndexedDB restant la source principale.
 - `src/export/` : CSV et JSON.
 - `src/ui/` : écrans Preact, `strings.ts`, styles.

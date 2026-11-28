@@ -66,6 +66,8 @@ export function normalizeClaim(raw: unknown, legacy: boolean, fallbackDate: stri
     date: date(r.date) || fallbackDate,
     label: str(r.label),
     category: pick(legacy ? r.cat : r.category, CATEGORIES, LEGACY_CATEGORIES, "other"),
+    store: str(r.store).trim(),
+    subcategory: str(r.subcategory).trim(),
     amount: amount(r.amount, legacy),
     ref: str(r.ref),
     notes: str(r.notes),

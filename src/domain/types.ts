@@ -9,8 +9,19 @@ export const CATEGORIES = [
   "gp", "specialist", "pharmacy", "dental_optical", "lab_tests", "item_return", "other",
 ] as const;
 export type Category = (typeof CATEGORIES)[number];
-/** The only "shopping" category; every other one is a health expense. */
+/** The only "shopping" category (an item bought, then returned). */
 export const SHOP_CATEGORY: Category = "item_return";
+
+/** Main families. Health has fixed sub-categories; shopping is classified by store. */
+export const GROUPS = ["health", "shopping", "other"] as const;
+export type Group = (typeof GROUPS)[number];
+export const HEALTH_CATEGORIES = ["gp", "specialist", "pharmacy", "dental_optical", "lab_tests"] as const;
+export type HealthCategory = (typeof HEALTH_CATEGORIES)[number];
+
+export function groupOf(category: Category): Group {
+  if (category === SHOP_CATEGORY) return "shopping";
+  return category === "other" ? "other" : "health";
+}
 
 export const SOURCES = ["social_security", "mutuelle", "retailer", "other"] as const;
 export type Source = (typeof SOURCES)[number];
@@ -44,6 +55,10 @@ export interface Claim {
   date: Ymd;
   label: string;
   category: Category;
+  /** Shopping only: the store (free text, grouped case- and accent-insensitively). */
+  store: string;
+  /** Optional free sub-category, for shopping and other (e.g. "clothes"). */
+  subcategory: string;
   amount: Cents;
   ref: string;
   notes: string;

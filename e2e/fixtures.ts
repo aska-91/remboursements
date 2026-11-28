@@ -37,15 +37,15 @@ export function demoData() {
 }
 
 /** Starts from a clean device, optionally with the sample data. */
-export async function start(page: Page, opts: { demo?: boolean } = {}) {
+export async function start(page: Page, opts: { demo?: boolean; data?: unknown } = {}) {
   await page.goto("/");
   await page.evaluate(async (data) => {
     localStorage.clear();
     await new Promise((r) => { const q = indexedDB.deleteDatabase("refund-tracker"); q.onsuccess = q.onerror = q.onblocked = r; });
     if (data) localStorage.setItem("remboursements-v2", JSON.stringify(data));
-  }, opts.demo ? demoData() : null);
+  }, opts.data ?? (opts.demo ? demoData() : null));
   await page.reload();
-  await page.locator(opts.demo ? ".card" : ".empty").first().waitFor();
+  await page.locator(opts.data ? ".chip" : opts.demo ? ".card" : ".empty").first().waitFor();
 }
 
 /** Waits until every change has been written to the device (before a reload). */

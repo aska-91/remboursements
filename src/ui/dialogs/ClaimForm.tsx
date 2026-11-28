@@ -1,6 +1,7 @@
 import { useState } from "preact/hooks";
-import type { Category, Claim, RefundMode, Source, Ymd } from "../../domain/types";
-import { CATEGORIES, DEFAULT_DELAY_DAYS, REFUND_MODES, SHOP_CATEGORY, SOURCES } from "../../domain/types";
+import type { Category, Claim, Group, RefundMode, Source, Ymd } from "../../domain/types";
+import { DEFAULT_DELAY_DAYS, GROUPS, HEALTH_CATEGORIES, REFUND_MODES, SHOP_CATEGORY, SOURCES, groupOf } from "../../domain/types";
+import { storeChoices, subcategoryChoices } from "../../domain/report";
 import { blankItem, defaultClaimBy, defaultDue, defaultItems, isLocked, newId, type ClaimInput } from "../../domain/actions";
 import { addDays } from "../../domain/dates";
 import { toCents, toEuros } from "../../domain/money";
@@ -33,15 +34,19 @@ function rowsFor(category: Category, date: Ymd, amount: string): Row[] {
 interface Props {
   /** Expense to edit, or undefined for a new one. */
   claim?: Claim;
+  /** All expenses, to suggest stores and sub-categories already used. */
+  claims: Claim[];
   today: Ymd;
   onSave: (input: ClaimInput) => void;
   onClose: () => void;
 }
 
-export function ClaimForm({ claim, today, onSave, onClose }: Props) {
+export function ClaimForm({ claim, claims, today, onSave, onClose }: Props) {
   const editing = !!claim;
   const [date, setDate] = useState(claim?.date ?? today);
-  const [category, setCategory] = useState<Category>(claim?.category ?? CATEGORIES[0]);
+  const [category, setCategory] = useState<Category>(claim?.category ?? HEALTH_CATEGORIES[0]);
+  const [store, setStore] = useState(claim?.store ?? "");
+  const [subcategory, setSubcategory] = useState(claim?.subcategory ?? "");
   const [label, setLabel] = useState(claim?.label ?? "");
   const [amount, setAmount] = useState(claim ? eurosText(claim.amount) : "");
   const [ref, setRef] = useState(claim?.ref ?? "");
@@ -58,13 +63,20 @@ export function ClaimForm({ claim, today, onSave, onClose }: Props) {
       ? claim.items.map((i) => ({
           id: i.id, source: i.source, expected: eurosText(i.expected), due: i.due, dueTouched: true, hasReceipt: i.received != null, locked: isLocked(i),
         }))
-      : rowsFor(CATEGORIES[0], today, ""),
+      : rowsFor(HEALTH_CATEGORIES[0], today, ""),
   );
   const shop = category === SHOP_CATEGORY;
+  const group = groupOf(category);
+  const storeSuggestions = storeChoices(claims).filter((c) => c.key);
+  const subSuggestions = subcategoryChoices(claims, ["shopping", "other"]).filter((c) => c.key);
 
   const val = (f: (v: string) => void) => (e: Event) => f((e.target as HTMLInputElement).value);
   const setRow = (id: string, patch: Partial<Row>) => setRows(rows.map((r) => (r.id === id ? { ...r, ...patch } : r)));
 
+  const changeGroup = (g: Group) => {
+    // Health keeps its type when already health; shopping and other have a single category.
+    changeCategory(g === "shopping" ? SHOP_CATEGORY : g === "other" ? "other" : group === "health" ? category : HEALTH_CATEGORIES[0]);
+  };
   const changeCategory = (c: Category) => {
     setCategory(c);
     // New expense: pre-fill the lines that fit the category. Editing keeps the user's lines.
@@ -93,7 +105,7 @@ export function ClaimForm({ claim, today, onSave, onClose }: Props) {
     if (!label.trim()) return;
     onClose();
     onSave({
-      date, label, category, amount: toCents(amount), ref, notes, returnBy, returnedDate, tracking, refundMode,
+      date, label, category, store, subcategory, amount: toCents(amount), ref, notes, returnBy, returnedDate, tracking, refundMode,
       needsRequest, claimBy, sentDate,
       items: rows.map((r) => ({ id: r.id, source: r.source, expected: toCents(r.expected), due: r.due })),
     });
@@ -105,12 +117,37 @@ export function ClaimForm({ claim, today, onSave, onClose }: Props) {
         <div class="grid2">
           <label class="f">{strings.form.date}<input type="date" required value={date} onInput={val(setDate)} /></label>
           <label class="f">
-            {strings.form.category}
-            <select value={category} onChange={val((v) => changeCategory(v as Category))}>
-              {CATEGORIES.map((c) => <option key={c} value={c}>{strings.categories[c]}</option>)}
+            {strings.form.family}
+            <select value={group} onChange={val((v) => changeGroup(v as Group))}>
+              {GROUPS.map((g) => <option key={g} value={g}>{strings.groups[g]}</option>)}
             </select>
           </label>
         </div>
+        {group === "health" && (
+          <label class="f">
+            {strings.form.healthType}
+            <select value={category} onChange={val((v) => changeCategory(v as Category))}>
+              {HEALTH_CATEGORIES.map((c) => <option key={c} value={c}>{strings.categories[c]}</option>)}
+            </select>
+          </label>
+        )}
+        {group === "shopping" && (
+          <div class="f-group">
+            <label class="f">
+              {strings.form.store}
+              <input type="text" required maxLength={60} list="store-suggestions" placeholder={strings.form.storePlaceholder} autoComplete="off" aria-describedby="store-hint" value={store} onInput={val(setStore)} />
+            </label>
+            <p class="hint" id="store-hint">{strings.form.storeHint}</p>
+          </div>
+        )}
+        {group !== "health" && (
+          <label class="f">
+            {strings.form.subcategory}
+            <input type="text" maxLength={60} list="subcategory-suggestions" placeholder={strings.form.subcategoryPlaceholder} autoComplete="off" value={subcategory} onInput={val(setSubcategory)} />
+          </label>
+        )}
+        <datalist id="store-suggestions">{storeSuggestions.map((c) => <option key={c.key} value={c.label} />)}</datalist>
+        <datalist id="subcategory-suggestions">{subSuggestions.map((c) => <option key={c.key} value={c.label} />)}</datalist>
         <label class="f">
           {strings.form.label}
           <input type="text" required maxLength={120} placeholder={strings.form.labelPlaceholder} data-autofocus value={label} onInput={val(setLabel)} />

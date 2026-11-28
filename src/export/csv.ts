@@ -1,4 +1,5 @@
 import type { Claim, Ymd } from "../domain/types";
+import { groupOf } from "../domain/types";
 import { claimStatus, gap, itemState } from "../domain/status";
 import { formatDate, formatDateTime } from "../domain/dates";
 import { strings } from "../ui/strings";
@@ -25,7 +26,8 @@ export function buildCsv(claims: Claim[], today: Ymd): string {
   for (const c of claims) {
     const history = [...c.log].sort((a, b) => a.t - b.t).map((l) => `${formatDateTime(l.t)} ${l.text}`).join(" | ");
     const head = [
-      cell(formatDate(c.date)), cell(c.label, true), cell(S.categories[c.category]), cell(c.ref, true), num(c.amount),
+      cell(formatDate(c.date)), cell(c.label, true), cell(S.categories[c.category]), cell(S.groups[groupOf(c.category)]),
+      cell(c.store, true), cell(c.subcategory, true), cell(c.ref, true), num(c.amount),
       cell(S.status[claimStatus(c, today)]), c.archived ? S.csv.yes : S.csv.no,
     ];
     const tail = [
